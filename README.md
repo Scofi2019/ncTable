@@ -8,4 +8,4 @@ It has the following characteristics:
 
 2.Width adaptation
 
-![image](https://github.com/Scofi2019/ncTable/images/ncTable-demo-2.png)
+![image](https://github.com/Scofi2019/ncTable/blob/master/images/ncTable-demo-2.png)
