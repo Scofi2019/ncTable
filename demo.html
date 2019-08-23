@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<link href="ncTable/dependency/font-awesome/4.7/css/font-awesome.min.css" rel="stylesheet">
+<link href="ncTable/dependency/font-awesome/4.7/css/font-awesome-animation.min.css" rel="stylesheet">
+<link href="ncTable/ncTable.css" rel="stylesheet">
+
+<script src="ncTable/dependency/jquery-1.11.min.js"></script>
+<script src="ncTable/ncTable.js"></script>
+
+</head>
+
+<body style="margin:8px;">
+
+<div class="ncTable" id="demoTable">
+    <div class="ncTableTitle">
+        ncTable Demo
+    </div>
+    <div class="ncTableHead" nc-width-type="pixel" nc-merge-names="sourcecode" nc-merge-sign="group">
+        <div class="ncTableRow">
+            <div class="ncTableHeadItem" nc-type="attrRowIndex" nc-width="40" nc-fixed="true" nc-align="center">Index</div>
+            <div class="ncTableHeadItem" nc-width="40" nc-type="custom" name="link"></div>
+            <div class="ncTableHeadItem" nc-search="true" nc-search-type="button" nc-search-vals="<i class='fa fa-clock-o'></i>&nbsp;&nbsp;Select Time" nc-width="160" name="CreateTime">Create Time</div>
+	        <div class="ncTableHeadItem" nc-hidden="true" nc-width="80" name="Type">Type</div>
+	        <div class="ncTableHeadItem" nc-search="true" nc-width="80" name="Typename" nc-search-type="select" nc-search-vals=":All,1:Male,2:Female">Type</div>
+	        <div class="ncTableHeadItem" nc-width="30" name="group"></div>
+	        <div class="ncTableHeadItem" nc-width="180" name="PeopleName">People Name</div>
+	        <div class="ncTableHeadItem" nc-search="true" nc-width="200" name="Birthdate">Birthdate</div>
+	        <div class="ncTableHeadItem" nc-width="80" name="Age">Age</div>
+	        <div class="ncTableHeadItem" nc-width="100" name="Weight">Weight</div>
+	        <div class="ncTableHeadItem" nc-width="100" name="Height">Height</div>
+	        <div class="ncTableHeadItem" nc-search="true" nc-width="100" name="Occupation">Occupation</div>
+	        <div class="ncTableHeadItem" nc-width="180" name="Cellphone">Cellphone Number</div>
+	        <div class="ncTableHeadItem" nc-search="true" nc-width="200" name="FamilyAddress">Family Address</div>
+        </div>
+    </div>
+    <div class="ncTableBody">
+    </div>
+    <div class="ncTablePager">
+    </div>
+</div>
+
+</body>	
+
+<script src="demo.js"></script>
