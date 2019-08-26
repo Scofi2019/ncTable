@@ -606,7 +606,9 @@ function __ncTable(option){
                 		}
                 	}
                 	
-                	$hr.css({height:$br.css("height")});
+                	var ht = Math.ceil(this._px2Num($br.css("height")));
+                	$br.css({height:ht+"px"});
+                	$hr.css({height:ht+"px"});
                 }
             }
     	}
@@ -708,6 +710,7 @@ function __ncTable(option){
 		$body.css({height:minusHeight});
 		
 		var $rowHead = this.$table.find(".ncTableRowHead");
+		$rowHead.append("<div style='height:20px;float:left;'>&nbsp;</div>");
 		$rowHead.css({height:minusHeight});
 		
         $rowHead.css({"padding-bottom":"50px"});
@@ -827,18 +830,18 @@ function __ncTable(option){
             	this.$table.find(".ncTableBody").scroll(function(e){
             		var $head = myself.$table.find(".ncTableHead");
             		$head.scrollLeft($(this).scrollLeft());
-            		var left = $head.scrollLeft();
+            		/*var left = $head.scrollLeft();
             		if($(this).scrollLeft() > left){
             			$(this).scrollLeft(left);
-            		}
+            		}*/
             		
             		var $rowHead = myself.$table.find(".ncTableRowHead");
             		if($rowHead.length > 0){
             			$rowHead.scrollTop($(this).scrollTop());
-                		var top = $rowHead.scrollTop();
+                		/*var top = $rowHead.scrollTop();
                 		if($(this).scrollTop() > top){
                 			$(this).scrollTop(top);
-                		}
+                		}*/
             		}
             	});
             }
