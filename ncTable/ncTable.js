@@ -32,6 +32,8 @@ $.fn.extend({
 function __ncTable(option){
 	this.option = option?option:{};
 	
+	var myself = this;
+	
 	//创建table结构
 	this.create = function(){
 		this._columns = [];
@@ -373,7 +375,6 @@ function __ncTable(option){
 			this._loadDataParam = param;
 		}
 		
-		var myself = this;
 		var postData = this._loadDataParam;
 		
 		if(this.$table.find(".ncTablePager").length > 0){
@@ -719,8 +720,6 @@ function __ncTable(option){
     
     //绑定事件
     this._bindEvent = function(type){
-    	var myself = this;
-    	
     	if(type == "load"){
     		var event = this.option && this.option.event?this.option.event:{};
     		//行点击事件
@@ -951,7 +950,7 @@ function __ncTable(option){
     this.getCurrentRowData = function(rowid){
     	if(rowid){
     		return this._cache_data[rowid - 1];
-    	}else if(this._currentRow > 0 && this._cache_data.length > 0){
+    	}else if(this._currentRow > 0 && this._cache_data && this._cache_data.length > 0){
     		return this._cache_data[this._currentRow - 1];
     	}
     	return null;

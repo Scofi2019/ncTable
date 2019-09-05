@@ -22,16 +22,16 @@
 .ncTable>.ncTableTitle{
 	float:left;
 	width:100%;
-	font-size:15px;
+	font-size:14px;
     font-family: 'MacOsFont', 'Microsoft Yahei', 'Î¢ÈíÑÅºÚ', Verdana, Arial, Helvetica, sans-serif !important;
-    padding:3px 12px;
+    padding:3px 8px;
     position:relative;
     box-sizing:border-box;
-    background-color: #608fb7;
-    color: #fff;
+    background-color: #fff;
+    color: #000;
 }
 
-.ncTable>.ncTableTitle:before{
+/* .ncTable>.ncTableTitle:before{
 	position: absolute;
     top: 5px;
     left:4px;
@@ -41,13 +41,13 @@
     border-bottom: 8px solid #c5f7ff;
     border-left: 2px solid #c5f7ff;
     content: '';
-}
+} */
 
 .ncTable>.ncTableHead,
 .ncTable>.ncTableRowHeadHead{
 	float:left;
     width:100%;
-    background-color:#c5f7ff;
+    background-color:#fff;
     overflow:hidden;
     box-sizing:border-box;
 }
@@ -72,6 +72,12 @@
     box-sizing:border-box;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border-top:1px solid #ddd;
+    background-color:#eee;
+}
+
+.ncTable>.ncTableHead>.ncTableRow>.ncTableHeadItem{
+	border-right:1px solid #ddd;
 }
 
 .ncTable>.ncTableHead>.ncTableRow>.ncTableHeadItem.hidden{
@@ -80,13 +86,13 @@
 
 .ncTable>.ncTableHead>.ncTableRow.search,
 .ncTable>.ncTableRowHeadHead>.ncTableRow.search{
-	background-color:#fff!important;
 	border-bottom:1px solid #ddd;
+	background-color:#eee;
 }
 
 .ncTable>.ncTableHead>.ncTableRow.search>.ncTableHeadItem,
 .ncTable>.ncTableRowHeadHead>.ncTableRow.search>.ncTableHeadItem{
-    padding:3px 5px;	
+    padding:3px 5px;
 }
 
 .ncTable>.ncTableHead>.ncTableRow.search>.ncTableHeadItem input,
