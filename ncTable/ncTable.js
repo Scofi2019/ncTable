@@ -42,7 +42,10 @@ function __ncTable(option){
 		this._reset();
 		this._parseNcAttr();
 		
-		this.$table.attr("onselectstart","return false");
+		if(!this.option.onselectstart){
+			this.$table.attr("onselectstart","return false");
+		}
+		
 		//宽度类型（percent百分比, pixel像素）
 		if(this._widthType == "percent"){
 			this.$table.find(".ncTableBody").css({"overflow-x":"hidden"});
@@ -406,12 +409,11 @@ function __ncTable(option){
 							myself.addRow(list[i]);
 						}
 						myself.endUpdate();
-						
-						//设置分页数据
-						myself._setPage(data);
 					}else{
 						myself.endUpdate({fail:true, msg:"没有查询到数据"});
 					}
+					//设置分页数据
+					myself._setPage(data);
 				}else{
 					myself.endUpdate({fail:true, msg:"没有查询到数据"});
 				}
@@ -494,7 +496,7 @@ function __ncTable(option){
 			if(col.type == "custom"){
 				html += '>';
 				if(this.option.custom && this.option.custom[col.name]){
-					html += this.option.custom[col.name].formatter.call(this, item[col.name], opt.rowid);
+					html += this.option.custom[col.name].formatter.call(this, item[col.name], opt.rowid, item);
 				}
 			}else if(col.type == "attrRowIndex"){
 				html += ' nc-type="attrRowIndex">';
@@ -543,6 +545,11 @@ function __ncTable(option){
     		var $fail = $("<div class='nc-fail'><i style='color:#608fb7;' class='fa fa-exclamation-circle'></i>&nbsp;"+opt.msg+"</div>");
     		this.$table.append($fail);
         	$fail.css({"left":(this.$table.width()-$fail.width())/2+"px", "top":(this.$table.height()-$fail.height())/2+"px"});
+    	
+        	var $nullRow = $("<div class='ncTableEmptyRow'></div>");
+			$nullRow.width(this.$table.find(".ncTableHead>.ncTableRow").width());
+			$nullRow.height(this.$table.find(".ncTableBody").height());
+			this.$table.find(".ncTableBody").append($nullRow);
     	}else{
     		var $cacheRow = $(this._cacheRowHTML);
         	$cacheRow.hide();
@@ -607,9 +614,14 @@ function __ncTable(option){
                 		}
                 	}
                 	
-                	var ht = Math.ceil(this._px2Num($br.css("height")));
-                	$br.css({height:ht+"px"});
-                	$hr.css({height:ht+"px"});
+                	if(this.option.rowHeight){
+                		$br.css({height:this.option.rowHeight+"px"});
+                    	$hr.css({height:this.option.rowHeight+"px"});
+                	}else{
+                		var ht = Math.ceil(this._px2Num($br.css("height")));
+                    	$br.css({height:ht+"px"});
+                    	$hr.css({height:ht+"px"});
+                	}
                 }
             }
     	}
@@ -869,7 +881,11 @@ function __ncTable(option){
     	this._currentPage = Number(data.page);
     	//当前起始终止记录数
     	var startRows = (Number(data.page)-1)*Number(pageRows);
-    	this.$table.find(".ncPageRowRange").html((startRows+1)+"-"+(startRows+data.gridResult.length));
+    	if(startRows > -1){
+    		this.$table.find(".ncPageRowRange").html((startRows+1)+"-"+(startRows+data.gridResult.length));
+    	}else{
+    		this.$table.find(".ncPageRowRange").html("");
+    	}
     }
     
     //每页记录数
@@ -995,5 +1011,20 @@ function __ncTable(option){
         this._currentRow = null;
     	this.$table.find(".ncTableRow[nc-index]").removeClass("focus");
     	this.$table.find(".ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']").prop("checked",false);
+    }
+    
+    //获取所有选择的行
+    this.getSelectedRowData = function(){
+    	var rowData = [];
+    	var $inputs = this.$table.find(".ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']:checked");
+    	
+    	$inputs.each(function(){
+    		var $input = $(this);
+    		var $row = $input.parent().parent();
+    		var index = $row.attr("nc-index");
+    		rowData.push(myself._cache_data[index-1]);
+    	})
+    	
+    	return rowData;
     }
 }
