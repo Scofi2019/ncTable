@@ -734,6 +734,81 @@ function __ncTable(option){
     this._bindEvent = function(type){
     	if(type == "load"){
     		var event = this.option && this.option.event?this.option.event:{};
+    		
+    		myself.action = myself.action?myself.action:{};
+    		
+    		//列头鼠标移动事件
+    		var $tableHead = this.$table.find(".ncTableHead");
+    		this.$headItems = $tableHead.find(".ncTableHeadItem");
+    		$tableHead.unbind("mousedown");
+    		$tableHead.bind("mousedown", function(e){
+    			myself.$headItems.each(function(){
+    				var $this = $(this);
+    				var left = $this.offset().left + myself._getElementWidth($this);
+    				var top = $this.offset().top + myself._getElementHeight($this);
+    				if(e.pageX > left - 10 && e.pageX < left + 10 &&
+    				   e.pageY > $this.offset().top && e.pageY < top){
+    					myself.action.$dragHeadItem = $this;
+    					myself.action.rowHeadWidth = myself._getElementWidth($tableHead.find(".ncTableRow:first"),"padding");
+    					return;
+    				}
+    			});
+    		});
+    		
+    		$tableHead.unbind("mousemove");
+    		$tableHead.bind("mousemove", function(e){
+				var $this = $(this);
+    			myself.$headItems.each(function(){
+    				var $this = $(this);
+    				var left = $this.offset().left + myself._getElementWidth($this);
+    				if(e.pageX > left - 10 && e.pageX < left + 10){
+    					$this.css({cursor:"w-resize"});
+    					return;
+    				}
+    				if(!myself.action.$dragHeadItem){
+    					$this.css({cursor:"default"});
+    				}
+    			});
+    		})
+    		
+    		$tableHead.unbind("mouseup");
+    		$tableHead.bind("mouseup", function(e){
+    			if(myself.action.$dragHeadItem){
+    				var $this = $(this);
+    				var $dhi = myself.action.$dragHeadItem;
+    				var name = $dhi.attr("name");
+    				var width = e.pageX - $dhi.offset().left;
+    				var c = width - myself._getElementWidth($dhi);
+    				var $tr = $this.find(".ncTableRow:first");
+    				var trWidth = myself.action.rowHeadWidth + c;
+    				var calWidth = 0;
+    				var n2w = {};
+    				$tr.find(".ncTableHeadItem").each(function(){
+    					var $item = $(this);
+    					if(!$item.attr("nc-hidden") || $item.attr("nc-hidden") == "false"){
+    						if($item.attr("name") != name){
+    							var width = $item.css("width");
+    							width = myself._px2Num(width);
+    							n2w[$item.attr("name")] = width;
+    							calWidth += Number(width);
+        					}
+    					}
+    				});
+    				$this.find(".ncTableRow").css({width:trWidth});
+    				myself.$table.find(".ncTableBody>.ncTableRow").css({width:trWidth});
+    				var percent = "";
+    				for(var j in n2w){
+    					percent = Math.floor((n2w[j])/trWidth*10000)/100+"%";
+    					$this.find(".ncTableHeadItem[name='"+j+"']").css({width:percent});
+    					myself.$table.find(".ncTableBody>.ncTableRow>.ncTableBodyItem[name='"+j+"']").css({width:percent});
+    				}
+    				percent = Math.floor((trWidth-calWidth)/trWidth*10000)/100+"%";
+    				$this.find(".ncTableHeadItem[name='"+name+"']").css({width:percent});
+    				myself.$table.find(".ncTableBody>.ncTableRow>.ncTableBodyItem[name='"+name+"']").css({width:percent});
+    			}
+    			myself.action.$dragHeadItem = null;
+    		})
+    		
     		//行点击事件
     		var $rows = this.$table.find(".ncTableBody>.ncTableRow,.ncTableRowHead>.ncTableRow");
     		
@@ -939,6 +1014,9 @@ function __ncTable(option){
 			if(type == "border-box"){
 				return $ele.width() - (this._px2Num($ele.css("border-left-width")) + this._px2Num($ele.css("border-right-width")) +
 				                       this._px2Num($ele.css("padding-left")) + this._px2Num($ele.css("padding-right")));
+			}else if(type == "padding"){
+				return $ele.width() + this._px2Num($ele.css("padding-left")) + this._px2Num($ele.css("padding-right")) + 
+				                      this._px2Num($ele.css("border-left-width")) + this._px2Num($ele.css("border-right-width"));
 			}else{
 				return $ele.width() + this._px2Num($ele.css("padding-left")) + this._px2Num($ele.css("padding-right")) + 
 		                              this._px2Num($ele.css("margin-left")) + this._px2Num($ele.css("margin-right")) + 

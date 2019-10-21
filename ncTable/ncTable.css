@@ -22,7 +22,7 @@
 .ncTable>.ncTableTitle{
 	float:left;
 	width:100%;
-	font-size:14px;
+	font-size:12px;
     font-family: 'MacOsFont', 'Microsoft Yahei', 'Î¢ÈíÑÅºÚ', Verdana, Arial, Helvetica, sans-serif !important;
     padding:3px 8px;
     position:relative;
@@ -50,11 +50,21 @@
     background-color:#fff;
     overflow:hidden;
     box-sizing:border-box;
+    user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
 }
 
 .ncTable>.ncTableHead>.ncTableRow,
 .ncTable>.ncTableRowHeadHead>.ncTableRow{
     float:left;
+    width:100%;	
+    box-sizing:border-box;
+}
+
+.ncTable>.ncTableHead>.ncTableEmptyRow{
+	float:left;
     width:100%;	
     box-sizing:border-box;
 }
@@ -67,7 +77,7 @@
 .ncTable>.ncTableRowHeadHead>.ncTableRow>.ncTableHeadItem{
     padding:8px 2px 8px 4px;
     float:left;
-    font-size:14px;
+    font-size:12px;
     font-family: 'MacOsFont', 'Microsoft Yahei', 'Î¢ÈíÑÅºÚ', Verdana, Arial, Helvetica, sans-serif !important;
     box-sizing:border-box;
     text-overflow: ellipsis;
@@ -119,7 +129,6 @@
 }
 
 .ncTable .searchNcButton{
-	float:left;
 	display: inline-block;
     margin-bottom: 0;
     text-align: center;
@@ -136,7 +145,12 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    width:100%;
+}
+
+.ncTable .searchNcButton.danger{
+	background-color: red;
+    color: #fff;
+    border: 0px;
 }
 
 .ncTable .searchNcButton:hover {
@@ -209,13 +223,13 @@
     overflow:hidden;
     padding:5px 2px 5px 4px;
     float:left;
-    font-size:14px;
+    font-size:12px;
     font-family: 'MacOsFont', 'Microsoft Yahei', 'Î¢ÈíÑÅºÚ', Verdana, Arial, Helvetica, sans-serif !important;
     box-sizing:border-box;
 }
 
 .ncTable>.ncTableBody>.ncTableRow>.ncTableBodyItem>a{
-	font-size:16px;
+	font-size:12px;
 	color:rgba(27, 134, 26, 0.64);
 	cursor:pointer;
 }
@@ -253,7 +267,7 @@
 .ncTable>.ncTablePager>.ncPagerArea{
     width:33%;
     float:left;
-    font-size:14px;
+    font-size:12px;
     padding:0px 5px;
     box-sizing:border-box;
 }
@@ -329,10 +343,21 @@
 	border:1px solid #ddd;
 	border-radius:3px;
 	font-size:9px;
+	text-align:center;
 }
 
 .nc-badge.badge-success{
 	background-color:rgba(27, 134, 26, 0.64);
+	color:#fff;
+}
+
+.nc-badge.badge-warning{
+	background-color:rgb(214, 222, 20);
+	color:#fff;
+}
+
+.nc-badge.badge-danger{
+	background-color:red;
 	color:#fff;
 }
 
