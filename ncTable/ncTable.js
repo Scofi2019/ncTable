@@ -777,8 +777,10 @@ function __ncTable(option){
     				var $this = $(this);
     				var $dhi = myself.action.$dragHeadItem;
     				var name = $dhi.attr("name");
-    				var width = e.pageX - $dhi.offset().left;
-    				var c = width - myself._getElementWidth($dhi);
+    				var width = e.pageX - $dhi.offset().left,
+    				    dhiWidth = myself._getElementWidth($dhi);
+    				var c = width - dhiWidth;
+    				c = c < 20 - dhiWidth ? 20 - dhiWidth : c;
     				var $tr = $this.find(".ncTableRow:first");
     				var trWidth = myself.action.rowHeadWidth + c;
     				var calWidth = 0;
@@ -898,14 +900,18 @@ function __ncTable(option){
             	$searchRow.find("input").keydown(function(event){
             		if(myself._lockRequest) return;
             		if(event.keyCode == 13){
-            			myself._loadDataParam = {};
+            			if(!myself.option.keepLoadParam){
+            				myself._loadDataParam = {};
+            			}
             			myself.loadData();
             		}
             	});
             	//下拉框选择事件
             	$searchRow.find("select").change(function(){
             		if(myself._lockRequest) return;
-            		myself._loadDataParam = {};
+            		if(!myself.option.keepLoadParam){
+        				myself._loadDataParam = {};
+        			}
             		myself.loadData();
             	});
             }
