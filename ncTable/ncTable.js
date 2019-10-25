@@ -46,12 +46,7 @@ function __ncTable(option){
 			this.$table.attr("onselectstart","return false");
 		}
 		
-		//宽度类型（percent百分比, pixel像素）
-		if(this._widthType == "percent"){
-			this.$table.find(".ncTableBody").css({"overflow-x":"hidden"});
-		}else if(this._widthType == "pixel"){
-			this.$table.find(".ncTableBody").css({"overflow":"auto"});
-		}
+		this.$table.find(".ncTableBody").css({"overflow":"auto"});
 		
 		//数据行宽
 		this._rowWidth = 0;
@@ -74,7 +69,7 @@ function __ncTable(option){
 				}
 				
 				//是否冻结该列，冻结列只能从左到右依次冻结，不能间隔
-				var fixed = this._widthType == "pixel" && $item.attr("nc-fixed")=="true"?true:false;
+				var fixed = $item.attr("nc-fixed")=="true"?true:false;
 				var hidden = $item.attr("nc-hidden")=="true"?true:false;
 				
 				//获取搜索下拉框的值
@@ -86,7 +81,6 @@ function __ncTable(option){
 				
 				var col = {"name":$item.attr("name")?$item.attr("name"):"", 
 						   "type":$item.attr("nc-type"),
-						   "widthType":this._widthType, 
 						   "width":$item.attr("nc-width"), 
 						   "align":$item.attr("nc-align"),
 						   "hidden":hidden,
@@ -124,9 +118,7 @@ function __ncTable(option){
 					search = true;
 				}
 			}
-			if(this._widthType == "pixel"){
-				this.$table.find(".ncTableHead>.ncTableRow").css({width:this._getRowMaxWidth()});
-			}
+			this.$table.find(".ncTableHead>.ncTableRow").css({width:this._getRowMaxWidth()});
 		}
 		
 		//固定列
@@ -174,9 +166,7 @@ function __ncTable(option){
 		var width = $head.find(".ncTableRow").width();
 		var height = 0;
 		var $search = $("<div class='ncTableRow search'></div>");
-		if(this._widthType == "pixel"){
-			$search.css({"width":this._getRowMaxWidth()});
-		}
+		$search.css({"width":this._getRowMaxWidth()});
 		$head.append($search);
 		for(var i=0;i<this._columns.length;i++){
 			var col = this._columns[i];
@@ -285,14 +275,10 @@ function __ncTable(option){
 	}
 	
 	this._getWidth = function(column, opt){
-		if(column.widthType == "percent"){
-			return column.width+"%";
-		}else if(column.widthType == "pixel"){
-			if(opt && opt.sumWidth){
-				return Math.floor((column.width/opt.sumWidth)*10000)/100+"%";
-			}else{
-				return column.width+"px";
-			}
+		if(opt && opt.sumWidth){
+			return Math.floor((column.width/opt.sumWidth)*10000)/100+"%";
+		}else{
+			return column.width+"px";
 		}
 	}
 	
@@ -315,9 +301,6 @@ function __ncTable(option){
 	this._parseNcAttr = function(){
 		this._attrs = {};
 		var $head = this.$table.find(".ncTableHead");
-		//宽度类型 percent百分比 pixel像素
-		var widthType = $head.attr("nc-width-type");
-		this._widthType = widthType?widthType:"pixel";
 		//合并列名称
 		var mergeName = $head.attr("nc-merge-names");
 		//合并符号
@@ -469,10 +452,7 @@ function __ncTable(option){
 		this._fixedColHTML += "</div>";
 		
 		//创建非冻结列
-		var style = "";
-    	if(this._widthType == "pixel"){
-    		style += 'style="width:'+this._getRowMaxWidth()+'"';
-    	}
+		var style = 'style="width:'+this._getRowMaxWidth()+'"';
 		this._cacheRowHTML += '<div class="ncTableRow" nc-index={index} '+style+'>';
 		
         if(this._columns && this._columns.length > 0){
@@ -587,14 +567,14 @@ function __ncTable(option){
     	var tableWidth = this._getElementWidth(this.$table, "border-box");
     	if(type == "create"){
     		var $rowHeadHead = this.$table.find(".ncTableRowHeadHead");
-    		$rowHeadHead.css({width: this._getWidth({widthType:"pixel", width:this._fixedColWidth},{sumWidth:tableWidth})});
-            this.$table.find(".ncTableHead").css({width: this._getWidth({widthType:"pixel", width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
+    		$rowHeadHead.css({width: this._getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
+            this.$table.find(".ncTableHead").css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
     	}else if(type == "load"){
             var $rowHead = this.$table.find(".ncTableRowHead");
             var $body = this.$table.find(".ncTableBody");
             
-            $rowHead.css({width: this._getWidth({widthType:"pixel", width:this._fixedColWidth},{sumWidth:tableWidth})});
-            $body.css({width: this._getWidth({widthType:"pixel", width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
+            $rowHead.css({width: this._getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
+            $body.css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
             
             this._resize("create");
             
@@ -803,10 +783,14 @@ function __ncTable(option){
     					percent = Math.floor((n2w[j])/trWidth*10000)/100+"%";
     					$this.find(".ncTableHeadItem[name='"+j+"']").css({width:percent});
     					myself.$table.find(".ncTableBody>.ncTableRow>.ncTableBodyItem[name='"+j+"']").css({width:percent});
+    					myself._setColWidth(j, n2w[j]);
     				}
     				percent = Math.floor((trWidth-calWidth)/trWidth*10000)/100+"%";
     				$this.find(".ncTableHeadItem[name='"+name+"']").css({width:percent});
     				myself.$table.find(".ncTableBody>.ncTableRow>.ncTableBodyItem[name='"+name+"']").css({width:percent});
+    				myself._setColWidth(name, trWidth-calWidth);
+    				
+    				myself._rowWidth = trWidth;
     			}
     			myself.action.$dragHeadItem = null;
     		})
@@ -917,26 +901,35 @@ function __ncTable(option){
             }
             
             //滚动条事件
-            if(this._widthType == "pixel"){
-            	this.$table.find(".ncTableBody").unbind("scroll");
-            	this.$table.find(".ncTableBody").scroll(function(e){
-            		var $head = myself.$table.find(".ncTableHead");
-            		$head.scrollLeft($(this).scrollLeft());
-            		/*var left = $head.scrollLeft();
-            		if($(this).scrollLeft() > left){
-            			$(this).scrollLeft(left);
+        	this.$table.find(".ncTableBody").unbind("scroll");
+        	this.$table.find(".ncTableBody").scroll(function(e){
+        		var $head = myself.$table.find(".ncTableHead");
+        		$head.scrollLeft($(this).scrollLeft());
+        		/*var left = $head.scrollLeft();
+        		if($(this).scrollLeft() > left){
+        			$(this).scrollLeft(left);
+        		}*/
+        		
+        		var $rowHead = myself.$table.find(".ncTableRowHead");
+        		if($rowHead.length > 0){
+        			$rowHead.scrollTop($(this).scrollTop());
+            		/*var top = $rowHead.scrollTop();
+            		if($(this).scrollTop() > top){
+            			$(this).scrollTop(top);
             		}*/
-            		
-            		var $rowHead = myself.$table.find(".ncTableRowHead");
-            		if($rowHead.length > 0){
-            			$rowHead.scrollTop($(this).scrollTop());
-                		/*var top = $rowHead.scrollTop();
-                		if($(this).scrollTop() > top){
-                			$(this).scrollTop(top);
-                		}*/
-            		}
-            	});
-            }
+        		}
+        	});
+    	}
+    }
+    
+    //设置列宽
+    this._setColWidth = function(name, width){
+    	for(var i = 0; i < this._columns.length; i++){
+    		var col = this._columns[i];
+    		if(col.name == name){
+    			col.width = width;
+    			break;
+    		}
     	}
     }
     
