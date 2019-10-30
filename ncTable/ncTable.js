@@ -46,7 +46,7 @@ function __ncTable(option){
 			this.$table.attr("onselectstart","return false");
 		}
 		
-		this.$table.find(".ncTableBody").css({"overflow":"auto"});
+		this.$table.find(".ncTableBody:first").css({"overflow":"auto"});
 		
 		//数据行宽
 		this._rowWidth = 0;
@@ -54,13 +54,13 @@ function __ncTable(option){
 		this._fixedColWidth = 0;
 		
 		if(!this._tableHeadHTML){
-			this._tableHeadHTML = this.$table.find(".ncTableHead").html();
+			this._tableHeadHTML = this.$table.find(".ncTableHead:first").html();
 		}else{
-			this.$table.find(".ncTableHead").html(this._tableHeadHTML);
+			this.$table.find(".ncTableHead:first").html(this._tableHeadHTML);
 		}
 		
 		//获取列的定义
-		var $items = this.$table.find(".ncTableHead>.ncTableRow>.ncTableHeadItem");
+		var $items = this.$table.find(".ncTableHead:first>.ncTableRow>.ncTableHeadItem");
 		if($items.length > 0){
 			for(var i=0;i<$items.length;i++){
 				var $item = $($items[i]);
@@ -118,7 +118,7 @@ function __ncTable(option){
 					search = true;
 				}
 			}
-			this.$table.find(".ncTableHead>.ncTableRow").css({width:this._getRowMaxWidth()});
+			this.$table.find(".ncTableHead:first>.ncTableRow").css({width:this._getRowMaxWidth()});
 		}
 		
 		//固定列
@@ -139,8 +139,8 @@ function __ncTable(option){
             
             fixedItems = null;
             
-            if(this.$table.find(".ncTableTitle").length > 0){
-            	this.$table.find(".ncTableTitle").after($fixedRowHead);
+            if(this.$table.find(".ncTableTitle:first").length > 0){
+            	this.$table.find(".ncTableTitle:first").after($fixedRowHead);
             }else{
             	this.$table.prepend($fixedRowHead);
             }
@@ -162,7 +162,7 @@ function __ncTable(option){
 	
 	//加入搜索行
 	this._addSearchRow = function(){
-		var $head = this.$table.find(".ncTableHead");
+		var $head = this.$table.find(".ncTableHead:first");
 		var width = $head.find(".ncTableRow").width();
 		var height = 0;
 		var $search = $("<div class='ncTableRow search'></div>");
@@ -190,7 +190,7 @@ function __ncTable(option){
 			}
 		}
 		
-		var $rowHeadHead = this.$table.find(".ncTableRowHeadHead");
+		var $rowHeadHead = this.$table.find(".ncTableRowHeadHead:first");
 	    if($rowHeadHead.length > 0){
 	    	var $row = $rowHeadHead.find(".ncTableRow");
 	    	$row = $row.clone();
@@ -245,7 +245,7 @@ function __ncTable(option){
 	
 	//创建分页组件
 	this._createPageComponent = function(){
-		if(this.$table.find(".ncTablePager").length == 0) return;
+		if(this._getPageRel().length == 0) return;
 		var pageOption = "";
 		if(this.option && this.option.pageList){
 			var pageList = this.option.pageList;
@@ -271,7 +271,7 @@ function __ncTable(option){
 					   '<div class="ncPagerArea right">' +
 					       '<div><span class="ncPageRowRange">1-20</span>&nbsp;&nbsp;共 <span class="ncPageRecords"></span> 条</div>' +
 					   '</div>';
-		this.$table.find(".ncTablePager").html(pageHTML);
+		this._getPageRel().html(pageHTML);
 	}
 	
 	this._getWidth = function(column, opt){
@@ -285,7 +285,7 @@ function __ncTable(option){
 	//获取搜索列的参数
 	this._getSearchParam = function(){
 		var param = {};
-		var $row = this.$table.find(".ncTableHead>.ncTableRow.search,.ncTableRowHeadHead>.ncTableRow.search");
+		var $row = this.$table.find(".ncTableHead:first>.ncTableRow.search,.ncTableRowHeadHead>.ncTableRow.search");
 		var $eles = $row.find("input,select");
 		for(var i=0;i<$eles.length;i++){
 			var $ele = $($eles[i]);
@@ -300,7 +300,7 @@ function __ncTable(option){
 	//解析NC属性
 	this._parseNcAttr = function(){
 		this._attrs = {};
-		var $head = this.$table.find(".ncTableHead");
+		var $head = this.$table.find(".ncTableHead:first");
 		//合并列名称
 		var mergeName = $head.attr("nc-merge-names");
 		//合并符号
@@ -317,11 +317,11 @@ function __ncTable(option){
 	
 	//重置表格所有内容
 	this._reset = function(){
-		this.$table.find(".ncTableHead>.ncTableRow.search").remove();
-		this.$table.find(".ncTableRowHead").remove();
-		this.$table.find(".ncTableRowHeadHead").remove();
-		this.$table.find(".ncTableBody").html("");
-		this.$table.find(".ncTablePager").html("");
+		this.$table.find(".ncTableHead:first>.ncTableRow.search").remove();
+		this.$table.find(".ncTableRowHead:first").remove();
+		this.$table.find(".ncTableRowHeadHead:first").remove();
+		this.$table.find(".ncTableBody:first").html("");
+		this._getPageRel().html("");
 	}
 	
 	this._deepClone = function(obj){
@@ -363,7 +363,7 @@ function __ncTable(option){
 		
 		var postData = this._loadDataParam;
 		
-		if(this.$table.find(".ncTablePager").length > 0){
+		if(this._getPageRel().length > 0){
 			postData = $.extend(this._loadDataParam, {page:myself._getCurrentPage(), rows:myself._getCurrentPageRow()})
 		}
 		
@@ -416,14 +416,14 @@ function __ncTable(option){
 	//开始更新数据
 	this.beginUpdate = function(){
 		this._lockRequest = true;
-		this.$table.find(".ncTableRowHead").html("");
-		this.$table.find(".ncTableBody").html("");
-		this.$table.find(".nc-loading").remove();
-		this.$table.find(".nc-fail").remove();
+		this.$table.find(".ncTableRowHead:first").html("");
+		this.$table.find(".ncTableBody:first").html("");
+		this.$table.find(".nc-loading:first").remove();
+		this.$table.find(".nc-fail:first").remove();
 		var $loading = $("<div class='nc-loading' width='float:left;width:180px;'><i style='color:#608fb7;' class='fa fa-spinner fa-pulse'></i>&nbsp;正在查询，请稍候...</div>");
 		this.$table.append($loading);
 		var top = (this.$table.height()-$loading.height())/2;
-		top = top < 0 ? this.$table.find(".ncTableHead").height()+100 : top;
+		top = top < 0 ? this.$table.find(".ncTableHead:first").height()+100 : top;
 		$loading.css({"left":(this.$table.width()-$loading.width())/2+"px", "top":top+"px"});
 		this._cacheRowHTML = "";
 		this._cache_data = null;
@@ -484,6 +484,9 @@ function __ncTable(option){
 			}else if(col.type == "attrCheckBox"){
 				html += ' nc-type="attrCheckBox">';
 				html += '<input type="checkbox" />';
+			}else if(col.type == "attrSubGrid"){
+				html += ' nc-type="attrSubGrid">';
+				html += '<a class="attrSubGrid"><i class="fa fa-caret-right"></i></a>';
 			}
 		}else{
 			var content = item[col.name]?item[col.name]:"";
@@ -519,7 +522,7 @@ function __ncTable(option){
 	
 	//结束更新数据
     this.endUpdate = function(opt){
-    	this.$table.find(".nc-loading").remove();
+    	this.$table.find(".nc-loading:first").remove();
     	if(opt && opt.fail){
     		//设置body内容
     		var $fail = $("<div class='nc-fail'><i style='color:#608fb7;' class='fa fa-exclamation-circle'></i>&nbsp;"+opt.msg+"</div>");
@@ -527,15 +530,15 @@ function __ncTable(option){
         	$fail.css({"left":(this.$table.width()-$fail.width())/2+"px", "top":(this.$table.height()-$fail.height())/2+"px"});
     	
         	var $nullRow = $("<div class='ncTableEmptyRow'></div>");
-			$nullRow.width(this.$table.find(".ncTableHead>.ncTableRow").width());
-			$nullRow.height(this.$table.find(".ncTableBody").height());
-			this.$table.find(".ncTableBody").append($nullRow);
+			$nullRow.width(this.$table.find(".ncTableHead:first>.ncTableRow").width());
+			$nullRow.height(this.$table.find(".ncTableBody:first").height());
+			this.$table.find(".ncTableBody:first").append($nullRow);
     	}else{
     		var $cacheRow = $(this._cacheRowHTML);
         	$cacheRow.hide();
         	
         	//设置body内容
-        	this.$table.find(".ncTableBody").html($cacheRow);
+        	this.$table.find(".ncTableBody:first").html($cacheRow);
         	//构建rowHead
         	this._buildRowHead();
         	
@@ -548,14 +551,39 @@ function __ncTable(option){
     	this._lockRequest = false;
 	}
     
+    //插入子表
+    this.insertSubGrid = function(html, rowid){
+    	var $subGrid = $("<div class='ncTableRowSubGrid'></div>");
+    	if(typeof(html)=='string'){
+    		$subGrid.html(html);
+    	}else{
+    		$subGrid.append(html);
+    	}
+    	
+    	var $r = this.$table.find(".ncTableBody:first>.ncTableRow[nc-index='"+rowid+"']");
+    	$r.find(".ncTableRowSubGrid").remove();
+    	$r.append($subGrid);
+    	$r.css({height:"auto"});
+    	
+    	this.$table.find(".ncTableRowHead:first>.ncTableRow[nc-index='"+rowid+"']").height($r.height());
+    }
+    
+    //移除字表
+    this._removeSubGrid = function(rowid){
+    	var $r = this.$table.find(".ncTableBody:first>.ncTableRow[nc-index='"+rowid+"']");
+    	$r.find(".ncTableRowSubGrid").remove();
+    	
+    	this.$table.find(".ncTableRowHead:first>.ncTableRow[nc-index='"+rowid+"']").height($r.height());
+    }
+    
     //构建rowHead
     this._buildRowHead = function(){
-    	this.$table.find(".ncTableRowHead").remove();
+    	this.$table.find(".ncTableRowHead:first").remove();
     	if(this._fixedColWidth && this._fixedColWidth > 0){
     		this._fixedColHTML = "<div class='ncTableRowHead'>" + this._fixedColHTML + "</div>";
     		var $rowHead = $(this._fixedColHTML);
     		$rowHead.hide();
-        	this.$table.find(".ncTableHead").after($rowHead);
+        	this.$table.find(".ncTableHead:first").after($rowHead);
         	this._resize("load");
         	this.setHeight();
         	$rowHead.show();
@@ -566,12 +594,12 @@ function __ncTable(option){
     this._resize = function(type, opt){
     	var tableWidth = this._getElementWidth(this.$table, "border-box");
     	if(type == "create"){
-    		var $rowHeadHead = this.$table.find(".ncTableRowHeadHead");
+    		var $rowHeadHead = this.$table.find(".ncTableRowHeadHead:first");
     		$rowHeadHead.css({width: this._getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
-            this.$table.find(".ncTableHead").css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
+            this.$table.find(".ncTableHead:first").css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
     	}else if(type == "load"){
-            var $rowHead = this.$table.find(".ncTableRowHead");
-            var $body = this.$table.find(".ncTableBody");
+            var $rowHead = this.$table.find(".ncTableRowHead:first");
+            var $body = this.$table.find(".ncTableBody:first");
             
             $rowHead.css({width: this._getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
             $body.css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
@@ -694,15 +722,15 @@ function __ncTable(option){
 			this._dataHeight = height;
 		}
 		this._dataHeight = this._dataHeight?this._dataHeight:"300";
-		var fixHeight = this._getElementHeight(this.$table.find(".ncTableTitle")) +
-						this._getElementHeight(this.$table.find(".ncTableHead")) + 
-						this._getElementHeight(this.$table.find(".ncTablePager"));
+		var fixHeight = this._getElementHeight(this.$table.find(".ncTableTitle:first")) +
+						this._getElementHeight(this.$table.find(".ncTableHead:first")) + 
+						this._getElementHeight(this._getPageRel());
 		var minusHeight = this._dataHeight - fixHeight;
 		
-		var $body = this.$table.find(".ncTableBody");
+		var $body = this.$table.find(".ncTableBody:first");
 		$body.css({height:minusHeight});
 		
-		var $rowHead = this.$table.find(".ncTableRowHead");
+		var $rowHead = this.$table.find(".ncTableRowHead:first");
 		$rowHead.append("<div style='height:20px;float:left;'>&nbsp;</div>");
 		$rowHead.css({height:minusHeight});
 		
@@ -718,7 +746,7 @@ function __ncTable(option){
     		myself.action = myself.action?myself.action:{};
     		
     		//列头鼠标移动事件
-    		var $tableHead = this.$table.find(".ncTableHead");
+    		var $tableHead = this.$table.find(".ncTableHead:first");
     		this.$headItems = $tableHead.find(".ncTableHeadItem");
     		$tableHead.unbind("mousedown");
     		$tableHead.bind("mousedown", function(e){
@@ -733,6 +761,7 @@ function __ncTable(option){
     					return;
     				}
     			});
+    			e.stopPropagation();
     		});
     		
     		$tableHead.unbind("mousemove");
@@ -749,6 +778,7 @@ function __ncTable(option){
     					$this.css({cursor:"default"});
     				}
     			});
+    			e.stopPropagation();
     		})
     		
     		$tableHead.unbind("mouseup");
@@ -777,40 +807,43 @@ function __ncTable(option){
     					}
     				});
     				$this.find(".ncTableRow").css({width:trWidth});
-    				myself.$table.find(".ncTableBody>.ncTableRow").css({width:trWidth});
+    				myself.$table.find(".ncTableBody:first>.ncTableRow").css({width:trWidth});
     				var percent = "";
     				for(var j in n2w){
     					percent = Math.floor((n2w[j])/trWidth*10000)/100+"%";
     					$this.find(".ncTableHeadItem[name='"+j+"']").css({width:percent});
-    					myself.$table.find(".ncTableBody>.ncTableRow>.ncTableBodyItem[name='"+j+"']").css({width:percent});
+    					myself.$table.find(".ncTableBody:first>.ncTableRow>.ncTableBodyItem[name='"+j+"']").css({width:percent});
     					myself._setColWidth(j, n2w[j]);
     				}
     				percent = Math.floor((trWidth-calWidth)/trWidth*10000)/100+"%";
     				$this.find(".ncTableHeadItem[name='"+name+"']").css({width:percent});
-    				myself.$table.find(".ncTableBody>.ncTableRow>.ncTableBodyItem[name='"+name+"']").css({width:percent});
+    				myself.$table.find(".ncTableBody:first>.ncTableRow>.ncTableBodyItem[name='"+name+"']").css({width:percent});
     				myself._setColWidth(name, trWidth-calWidth);
     				
     				myself._rowWidth = trWidth;
     			}
     			myself.action.$dragHeadItem = null;
+    			e.stopPropagation();
     		})
     		
     		//行点击事件
-    		var $rows = this.$table.find(".ncTableBody>.ncTableRow,.ncTableRowHead>.ncTableRow");
+    		var $rows = this.$table.find(".ncTableBody:first>.ncTableRow,.ncTableRowHead:first>.ncTableRow");
     		
     		$rows.unbind("mouseenter").unbind("mouseleave"); 
-    		$rows.hover(function(){
+    		$rows.hover(function(e){
     			var index = Number($(this).attr("nc-index"));
-    			myself.$table.find(".ncTableRow[nc-index='"+index+"']").addClass("hover");
-    		},function(){
+    			myself._getRowRel(".ncTableRow[nc-index='"+index+"']").addClass("hover");
+    			e.stopPropagation();
+    		},function(e){
     			var index = Number($(this).attr("nc-index"));
-    			myself.$table.find(".ncTableRow[nc-index='"+index+"']").removeClass("hover");
+    			myself._getRowRel(".ncTableRow[nc-index='"+index+"']").removeClass("hover");
+    			e.stopPropagation();
     		});
     		
     		$rows.unbind("click");
     		$rows.click(function(e){
-            	myself.$table.find(".ncTableBody>.ncTableRow").removeClass("focus");
-            	myself.$table.find(".ncTableRowHead>.ncTableRow").removeClass("focus");
+            	myself.$table.find(".ncTableBody:first>.ncTableRow").removeClass("focus");
+            	myself.$table.find(".ncTableRowHead:first>.ncTableRow").removeClass("focus");
             	
             	var $this = $(this);
             	
@@ -831,36 +864,64 @@ function __ncTable(option){
         				}
         			}
         		}
-        		
+        		e.stopPropagation();
         	});
             
     		$rows.unbind("dblclick");
-    		$rows.dblclick(function(){
+    		$rows.dblclick(function(e){
             	var index = Number($(this).attr("nc-index"));
     			myself._currentRow = index;
     			
         		if(event.rowDoubleClick){
         			event.rowDoubleClick.call(myself, myself._cache_data[index-1]);
         		}
+        		e.stopPropagation();
     		});
+    		
+    		this.$table.find("a.attrSubGrid").unbind("click")
+    		this.$table.find("a.attrSubGrid").bind("click", function(e){
+    			var $this = $(this);
+    			$this.find("i").removeClass();
+    			var rid = $this.parent().parent().attr("nc-index");
+    			var evt = myself.option.event;
+    			if($this.attr("isExpand") == "true"){
+    				$this.attr("isExpand", "false");
+    				$this.find("i").addClass("fa fa-caret-right");
+    				myself._removeSubGrid(rid);
+    				var subGridCollapse = evt?evt.subGridCollapse:null;
+    				if(subGridCollapse){
+    					subGridCollapse.call(myself, rid);
+    				}
+    			}else{
+    				$this.attr("isExpand", "true");
+    				$this.find("i").addClass("fa fa-caret-down");
+    				var subGridExpand = evt?evt.subGridExpand:null;
+    				if(subGridExpand){
+    					subGridExpand.call(myself, rid, myself.getCurrentRowData(rid));
+    				}
+    			}
+    			e.stopPropagation();
+    		})
     	}else if(type == "create"){
     		//上一页点击事件
-    		this.$table.find(".ncPagerPrev").unbind("click");
-            this.$table.find(".ncPagerPrev").click(function(){
+    		this._getPageRel(".ncPagerPrev:first").unbind("click");
+    		this._getPageRel(".ncPagerPrev:first").click(function(e){
             	if(myself._lockRequest) return;
             	myself._currentPageMinus();
             	myself.loadData();
+            	e.stopPropagation();
             });
             //下一页点击事件
-            this.$table.find(".ncPagerNext").unbind("click");
-            this.$table.find(".ncPagerNext").click(function(){
+    		this._getPageRel(".ncPagerNext:first").unbind("click");
+    		this._getPageRel(".ncPagerNext:first").click(function(e){
             	if(myself._lockRequest) return;
             	myself._currentPagePlus();
             	myself.loadData();
+            	e.stopPropagation();
             });
             //页码输入框
-            this.$table.find(".ncPageNum").unbind("keydown");
-            this.$table.find(".ncPageNum").keydown(function(event){
+    		this._getPageRel(".ncPageNum:first").unbind("keydown");
+    		this._getPageRel(".ncPageNum:first").keydown(function(event){
             	if(myself._lockRequest) return;
             	if(event.keyCode == 13){
         			if(myself._isNumber($(this).val())){
@@ -869,16 +930,18 @@ function __ncTable(option){
         				$(this).val(myself._getCurrentPage());
         			}
             	}
+            	event.stopPropagation();
             });
             //每页行数下拉改变事件
-            this.$table.find(".ncPageRows").unbind("change");
-            this.$table.find(".ncPageRows").change(function(){
+    		this._getPageRel(".ncPageRows:first").unbind("change");
+    		this._getPageRel(".ncPageRows:first").change(function(e){
             	if(myself._lockRequest) return;
             	myself.loadData();
+            	e.stopPropagation();
             });
             
             //搜索事件
-            var $searchRow = this.$table.find(".ncTableRow.search");
+            var $searchRow = this.$table.find(".ncTableHead:first>.ncTableRow.search");
             if($searchRow.length > 0){
             	//输入框回车事件
             	$searchRow.find("input").keydown(function(event){
@@ -889,28 +952,30 @@ function __ncTable(option){
             			}
             			myself.loadData();
             		}
+            		event.stopPropagation();
             	});
             	//下拉框选择事件
-            	$searchRow.find("select").change(function(){
+            	$searchRow.find("select").change(function(e){
             		if(myself._lockRequest) return;
             		if(!myself.option.keepLoadParam){
         				myself._loadDataParam = {};
         			}
             		myself.loadData();
+            		e.stopPropagation();
             	});
             }
             
             //滚动条事件
-        	this.$table.find(".ncTableBody").unbind("scroll");
-        	this.$table.find(".ncTableBody").scroll(function(e){
-        		var $head = myself.$table.find(".ncTableHead");
+        	this.$table.find(".ncTableBody:first").unbind("scroll");
+        	this.$table.find(".ncTableBody:first").scroll(function(e){
+        		var $head = myself.$table.find(".ncTableHead:first");
         		$head.scrollLeft($(this).scrollLeft());
         		/*var left = $head.scrollLeft();
         		if($(this).scrollLeft() > left){
         			$(this).scrollLeft(left);
         		}*/
         		
-        		var $rowHead = myself.$table.find(".ncTableRowHead");
+        		var $rowHead = myself.$table.find(".ncTableRowHead:first");
         		if($rowHead.length > 0){
         			$rowHead.scrollTop($(this).scrollTop());
             		/*var top = $rowHead.scrollTop();
@@ -918,6 +983,7 @@ function __ncTable(option){
             			$(this).scrollTop(top);
             		}*/
         		}
+        		e.stopPropagation();
         	});
     	}
     }
@@ -942,35 +1008,36 @@ function __ncTable(option){
     
     //设置分页
     this._setPage = function(data){
-    	if(this.$table.find(".ncTablePager").length == 0) return;
+    	var $p = this._getPageRel();
+    	if($p.length == 0) return;
     	//每页记录数
     	var pageRows = this._getCurrentPageRow();
     	//总页数
-    	this.$table.find(".ncPageTotal").html(data.total);
+    	$p.find(".ncPageTotal:first").html(data.total);
     	this.pageTotal = Number(data.total);
     	//总记录数
-    	this.$table.find(".ncPageRecords").html(data.records);
+    	$p.find(".ncPageRecords:first").html(data.records);
     	//当前页
-    	this.$table.find(".ncPageNum").val(data.page);
+    	$p.find(".ncPageNum:first").val(data.page);
     	this._currentPage = Number(data.page);
     	//当前起始终止记录数
     	var startRows = (Number(data.page)-1)*Number(pageRows);
     	if(startRows > -1){
-    		this.$table.find(".ncPageRowRange").html((startRows+1)+"-"+(startRows+data.gridResult.length));
+    		$p.find(".ncPageRowRange:first").html((startRows+1)+"-"+(startRows+data.gridResult.length));
     	}else{
-    		this.$table.find(".ncPageRowRange").html("");
+    		$p.find(".ncPageRowRange:first").html("");
     	}
     }
     
     //每页记录数
     this._getCurrentPageRow = function(){
-    	return this.$table.find(".ncPageRows").val();
+    	return this._getPageRel(".ncPageRows:first").val();
     }
     
     //当前页
     this._getCurrentPage = function(){
-    	var pageNum = this.$table.find(".ncPageNum").val();
-    	var pageTotal = Number(this.$table.find(".ncPageTotal").text());
+    	var pageNum = this._getPageRel(".ncPageNum:first").val();
+    	var pageTotal = Number(this._getPageRel(".ncPageTotal:first").text());
     	pageNum = pageNum?pageNum:1;
     	if(this._isNumber(pageNum)){
     		pageNum = Number(pageNum);
@@ -982,13 +1049,13 @@ function __ncTable(option){
     //当前页增加1
     this._currentPagePlus = function(){
       	this._currentPage = (this._currentPage+1)>this.pageTotal?this.pageTotal:(this._currentPage+1);
-    	this.$table.find(".ncPageNum").val(this._currentPage);
+    	this._getPageRel(".ncPageNum:first").val(this._currentPage);
     }
     
     //当前页增加1
     this._currentPageMinus = function(){
     	this._currentPage = (this._currentPage-1)<=0?1:(this._currentPage-1);
-    	this.$table.find(".ncPageNum").val(this._currentPage);
+    	this._getPageRel(".ncPageNum:first").val(this._currentPage);
     }
     
 	//获取元素高度
@@ -1065,7 +1132,7 @@ function __ncTable(option){
     	if(!this._isNumber(rowid)) return;
     	this._currentRow = rowid;
     	
-    	var $row = this.$table.find(".ncTableRow[nc-index='"+rowid+"']");
+    	var $row = this._getRowRel(".ncTableRow[nc-index='"+rowid+"']");
     	$row.addClass("focus");
     	
     	if(this._selectType == "single"){
@@ -1074,7 +1141,7 @@ function __ncTable(option){
     		}
     	}
     	
-    	var $checkBox = $row.find(".ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']");
+    	var $checkBox = $row.find(".ncTableBodyItem[nc-type='attrCheckBox']:first>input[type='checkbox']");
     	if($checkBox.prop("checked")){
     		$checkBox.prop("checked", false);
     	}else{
@@ -1086,14 +1153,14 @@ function __ncTable(option){
     //使已选择的行变成不选择
     this.unSelectedRow = function(){
         this._currentRow = null;
-    	this.$table.find(".ncTableRow[nc-index]").removeClass("focus");
-    	this.$table.find(".ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']").prop("checked",false);
+        this._getRowRel(".ncTableRow[nc-index]").removeClass("focus");
+        this._getRowRel(".ncTableRow>.ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']").prop("checked",false);
     }
     
     //获取所有选择的行
     this.getSelectedRowData = function(){
     	var rowData = [];
-    	var $inputs = this.$table.find(".ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']:checked");
+    	var $inputs = this._getRowRel(".ncTableRow>.ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']:checked");
     	
     	$inputs.each(function(){
     		var $input = $(this);
@@ -1104,4 +1171,37 @@ function __ncTable(option){
     	
     	return rowData;
     }
+    
+    this._getRowRel = function(selector){
+    	return this.$table.find(".ncTableBody:first>"+selector+",.ncTableRowHead:first>"+selector);
+    }
+    
+    this._getPageRel = function(selector){
+    	//.ncTablePager在ncTableBody后面，此处这么写，是因为body中可能含有子表，子表也有pager
+    	if(selector){
+    		return this.$table.find(".ncTableBody:first").next().find(selector);
+    	}else{
+    		return this.$table.find(".ncTableBody:first").next();
+    	}
+    }
+    
+    //克隆表格
+    this.clone = function(){
+    	var $t = this.$table.clone();
+    	
+    	var selector = this.$table.selector+"_"+(new Date()).getTime();
+    	$t.selector = selector;
+    	$t.removeAttr("id");
+    	$t.css({display:"block"});
+    	
+    	$t.ncTable(this.option);
+    	
+    	return $t;
+    }
+    
+    //设置样式
+    this.setStyle = function(selector, style){
+    	this.$table.find(selector).css(style);
+    }
+    
 }

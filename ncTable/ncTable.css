@@ -370,3 +370,20 @@
 	width:20px;
 	text-align:right;
 }
+
+.ncTable a.attrSubGrid>i{
+	font-size:16px;
+}
+
+.ncTable .ncTableRow>.ncTableRowSubGrid{
+	float:left;
+	width:100%;
+	border-top:1px solid #ddd;
+	padding:5px 5px 5px 5px;
+	box-sizing:border-box;
+}
+
+.ncTable>.ncTableBody>.ncTableRow>.ncTableRowSubGrid,
+.ncTable>.ncTableBody>.ncTableRow.focus>.ncTableRowSubGrid{
+	background-color:#fff;
+}
