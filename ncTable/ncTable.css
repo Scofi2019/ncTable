@@ -75,7 +75,7 @@
 
 .ncTable>.ncTableHead>.ncTableRow>.ncTableHeadItem,
 .ncTable>.ncTableRowHeadHead>.ncTableRow>.ncTableHeadItem{
-    padding:8px 2px 8px 4px;
+    padding:8px 5px;
     float:left;
     font-size:12px;
     font-family: 'MacOsFont', 'Microsoft Yahei', 'Î¢ÈíÑÅºÚ', Verdana, Arial, Helvetica, sans-serif !important;
@@ -84,6 +84,7 @@
     white-space: nowrap;
     border-top:1px solid #ddd;
     background-color:#eee;
+    height:32px;
 }
 
 .ncTable>.ncTableHead>.ncTableRow>.ncTableHeadItem{
@@ -96,13 +97,14 @@
 
 .ncTable>.ncTableHead>.ncTableRow.search,
 .ncTable>.ncTableRowHeadHead>.ncTableRow.search{
-	border-bottom:1px solid #ddd;
-	background-color:#eee;
 }
 
 .ncTable>.ncTableHead>.ncTableRow.search>.ncTableHeadItem,
 .ncTable>.ncTableRowHeadHead>.ncTableRow.search>.ncTableHeadItem{
     padding:3px 5px;
+    border-bottom:1px solid #ddd;
+    border-right:1px solid #ddd;
+    height:32px;
 }
 
 .ncTable>.ncTableHead>.ncTableRow.search>.ncTableHeadItem input,
@@ -175,7 +177,7 @@
 }
 
 .ncTable>.ncTableRowHead>.ncTableRow{
-	border-bottom:1px solid #ddd;
+	border-bottom:0px;
 	border-right:1px solid #ddd;
 	float:left;
 	box-sizing:border-box;
@@ -194,8 +196,8 @@
 	float:left;
     width:100%;
     box-sizing:border-box;
-    border-bottom:1px solid #ddd;
-    border-right:1px solid #ddd;
+    /* border-bottom:1px solid #ddd;
+    border-right:1px solid #ddd; */
 }
 
 .ncTable>.ncTableBody>.ncTableRow:hover,
@@ -226,6 +228,16 @@
     font-size:12px;
     font-family: 'MacOsFont', 'Microsoft Yahei', 'Î¢ÈíÑÅºÚ', Verdana, Arial, Helvetica, sans-serif !important;
     box-sizing:border-box;
+    border-bottom:1px solid #ddd;
+	height:32px;
+}
+
+.ncTable>.ncTableBody>.ncTableRow>.ncTableBodyItem:not(.hidden){
+	border-right:1px solid #ddd;
+}
+
+.ncTable>.ncTableBody>.ncTableRow>.ncTableBodyItem.fillCol{
+	border:0px;
 }
 
 .ncTable>.ncTableBody>.ncTableRow>.ncTableBodyItem>a{
@@ -260,7 +272,7 @@
 	float:left;
     width:100%;
     padding:5px 2px;
-    background-color:#c5f7ff;
+    background-color:#eee;
     box-sizing:border-box;
 }
 
@@ -275,6 +287,7 @@
 .ncTable>.ncTablePager>.ncPagerArea.center{
     text-align:center;
     padding-top:3px;
+    line-height:2;
 }
 
 .ncTable>.ncTablePager>.ncPagerArea.right{
@@ -386,4 +399,32 @@
 .ncTable>.ncTableBody>.ncTableRow>.ncTableRowSubGrid,
 .ncTable>.ncTableBody>.ncTableRow.focus>.ncTableRowSubGrid{
 	background-color:#fff;
+}
+
+.ncTable .ncTableRow.group,
+.ncTable .ncTableRow.groupFix{
+	padding:0px;
+}
+
+.ncTable .ncTableRow.group>.ncTableBodyItem{
+	border-bottom:1px solid #ddd;
+	border-right:1px solid #ddd;
+	height:32px;
+}
+
+.ncTable .ncTableRow.group>.ncTableBodyItem.fillCol{
+	border:0px;
+}
+
+.ncTable .ncTableRow.groupFix{
+	text-align:center;
+}
+
+.ncTable .ncTableRow.group:hover,
+.ncTable .ncTableRow.groupFix:hover{
+}
+
+.ncTable .ncCaret{
+	font-size : 14px;
+	padding-right:10px;
 }

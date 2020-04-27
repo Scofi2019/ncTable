@@ -26,6 +26,8 @@ $.fn.extend({
 		}
 		
 		this.attr("innerId", this.selector);
+		
+		return ncTable;
 	}
 });
 
@@ -47,6 +49,7 @@ function __ncTable(option){
 		}
 		
 		this.$table.find(".ncTableBody:first").css({"overflow":"auto"});
+		this.$head = this.$table.find(".ncTableHead:first");
 		
 		//数据行宽
 		this._rowWidth = 0;
@@ -57,6 +60,25 @@ function __ncTable(option){
 			this._tableHeadHTML = this.$table.find(".ncTableHead:first").html();
 		}else{
 			this.$table.find(".ncTableHead:first").html(this._tableHeadHTML);
+		}
+		
+		var sumW = 0;
+		var $hItems = this.$head.find(".ncTableRow:first>.ncTableHeadItem");
+		$hItems.each(function(){
+			var $this = $(this),
+			    w = $this.attr("nc-width"),
+			    hidden = $this.attr("nc-hidden");
+			if(hidden) return;
+			sumW += w?Number(w):0;
+		});
+		
+		if(sumW < this.$head.width()){
+			//增加填充列
+			var $hRows = this.$table.find(".ncTableHead:first>.ncTableRow");
+			$hRows.each(function(){
+				var $this = $(this);
+				$this.append('<div class="ncTableHeadItem fillCol" nc-width="20" name="__fillCol__"></div>');
+			});
 		}
 		
 		//获取列的定义
@@ -79,6 +101,11 @@ function __ncTable(option){
 					searchVals = eval(searchVals);
 				}
 				
+				var n = $item.attr("name");
+				if(!n){
+					$item.attr("name", Math.round(Math.random()*1000));
+				}
+				
 				var col = {"name":$item.attr("name")?$item.attr("name"):"", 
 						   "type":$item.attr("nc-type"),
 						   "width":$item.attr("nc-width"), 
@@ -88,6 +115,7 @@ function __ncTable(option){
 						   "searchType":$item.attr("nc-search-type"),
 						   "searchValues":searchVals,
 						   "mergeSign":$item.attr("nc-merge-sign"),
+						   "class":$item.attr("class"),
 						   "ref":$item
 						  };
 				
@@ -107,18 +135,33 @@ function __ncTable(option){
 		
 		//非固定列
 		if(this._columns.length > 0){
+			var hWidth = this.$head.width(),
+			    sw = hWidth > this._rowWidth ? hWidth : this._rowWidth,
+			    minus = hWidth - this._rowWidth;
+		    
 			for(var i=0;i<this._columns.length;i++){
-				var col = this._columns[i];
-				var $item = col.ref;
-				$item.css({width:this._getWidth(col, {sumWidth:this._rowWidth})});
+				var col = this._columns[i],
+				    $item = col.ref;
+				//填充列
+				if(col["class"].indexOf("ncTableHeadItem fillCol") > -1){
+					if(minus > 0){
+						$item.css({width:this._inMethods.getWidthPercent(minus, sw)});
+					}else{
+					}
+				}else{
+					$item.css({width:this._inMethods.getWidth(col, {sumWidth:sw})});
+				}
+				
 				if(col.hidden){
 					$item.addClass("hidden");
 				}
-				if(col.search){
+				
+				if(col.search == "true"){
 					search = true;
 				}
 			}
-			this.$table.find(".ncTableHead:first>.ncTableRow").css({width:this._getRowMaxWidth()});
+			
+			this.$table.find(".ncTableHead:first>.ncTableRow").css({width:sw + "px"});
 		}
 		
 		//固定列
@@ -132,7 +175,7 @@ function __ncTable(option){
 				}
             	var colWid = $item.attr("nc-width")?Number($item.attr("nc-width")):30;
             	var $itemClone = $item.clone();
-            	$itemClone.css({width:this._getWidth(col, {sumWidth:this._fixedColWidth})});
+            	$itemClone.css({width:this._inMethods.getWidth(col, {sumWidth:this._fixedColWidth})});
             	$fixedRowHead.find(".ncTableRow").append($itemClone);
             	$item.remove();
             }		
@@ -162,16 +205,16 @@ function __ncTable(option){
 	
 	//加入搜索行
 	this._addSearchRow = function(){
-		var $head = this.$table.find(".ncTableHead:first");
-		var width = $head.find(".ncTableRow").width();
-		var height = 0;
+		var $head = this.$table.find(".ncTableHead:first"),
+		    width = $head.find(".ncTableRow").width();
+		
 		var $search = $("<div class='ncTableRow search'></div>");
-		$search.css({"width":this._getRowMaxWidth()});
+		$search.css({"width":width + "px"});
 		$head.append($search);
 		for(var i=0;i<this._columns.length;i++){
 			var col = this._columns[i];
 			var $item = col.ref.clone();
-			$item.html("");
+			$item.html("&nbsp;");
 			$search.append($item);
 			if(!col.search) continue;
 			if(col.searchType == "select"){
@@ -197,7 +240,7 @@ function __ncTable(option){
 	    	$row.find(".ncTableHeadItem").html("");
 	    	$rowHeadHead.append($row);
 	    	$row.addClass("search");
-	    	$row.css({"height":this._getElementHeight($search)});
+	    	$row.css({"height":this._inMethods.getElementHeight($search)});
 	    }
 	    
 	    $search = $rowHeadHead.find(".ncTableRow.search");
@@ -274,14 +317,6 @@ function __ncTable(option){
 		this._getPageRel().html(pageHTML);
 	}
 	
-	this._getWidth = function(column, opt){
-		if(opt && opt.sumWidth){
-			return Math.floor((column.width/opt.sumWidth)*10000)/100+"%";
-		}else{
-			return column.width+"px";
-		}
-	}
-	
 	//获取搜索列的参数
 	this._getSearchParam = function(){
 		var param = {};
@@ -299,20 +334,78 @@ function __ncTable(option){
 	
 	//解析NC属性
 	this._parseNcAttr = function(){
-		this._attrs = {};
+		//列表头定义的属性集合
+		this._headAttrs = {};
 		var $head = this.$table.find(".ncTableHead:first");
 		//合并列名称
 		var mergeName = $head.attr("nc-merge-names");
 		//合并符号
-		this._mergeSign = "";
+		this._headAttrs.mergeSign = "";
 		if(mergeName){
-			this._mergeNames = mergeName.split(",");
-			this._mergeSignName = $head.attr("nc-merge-sign");
-			this._mergeSign = "<div class='nc-merge-col'></div>";
-			this._mergeSigns = ["┏","┠","┗"];
+			this._headAttrs.mergeNames = mergeName.split(",");
+			this._headAttrs.mergeSignName = $head.attr("nc-merge-sign");
+			this._headAttrs.mergeSign = "<div class='nc-merge-col'></div>";
+			this._headAttrs.mergeSigns = ["┏","┠","┗"];
 		}
 		//选择模式 single单选 multiple 多选
-		this._selectType = $head.attr("nc-select-type");
+		this._headAttrs.selectType = $head.attr("nc-select-type");
+		//分组列
+		this._headAttrs.groupName = $head.attr("nc-group-name");
+		this._headAttrs.groupSort = $head.attr("nc-group-sort");
+		
+		this._headMethods = {
+			//提取分组信息
+			getGroupInfo : function(list){
+				var la = this.linkAttr;
+				
+				var g = {
+				    match:function(obj){
+				    	var gn = la.groupName;
+				    	if(!gn) return;
+				    	
+				    	var gnd = this[gn];
+				    	if(!gnd) return;
+				    	
+				    	var val = obj[gn];
+				    	
+				    	for(var i = 0;i < gnd.length;i++){
+				    		if(gnd[i].value == val && !gnd[i].setGroup){
+				    			gnd[i].setGroup = true;
+				    			return true;
+				    		}
+				    	}
+				    	return false;
+					}
+				};
+				
+				if(!la.groupName) return g;
+				
+				var n = la.groupName;
+				if(la.groupSort == "desc"){
+					list.sort(function(a, b){
+						return a[n] == b[n] ? 0 : a[n] > b[n] ? -1 : 1;
+					});
+				}else {
+					list.sort(function(a, b){
+						return a[n] == b[n] ? 0 : a[n] > b[n] ? 1 : -1;
+					});
+				}
+				
+				g[n] = [];
+				var t = {};
+				
+				for(var j=0;j<list.length;j++){
+					var d = list[j][n];
+					if(!t[d]){
+						g[n].push({value : d});
+						t[d] = true;
+					}
+				}
+				
+				return g;
+			}
+		};
+		this._headMethods.linkAttr = this._headAttrs;
 	}
 	
 	//重置表格所有内容
@@ -345,6 +438,24 @@ function __ncTable(option){
 	        }
 	        return copy;
 	    }
+	}
+	
+	//增加本地数据
+	this.addLocalData = function(list){
+		this.beginUpdate();
+		
+		this._cache_data = list;
+		
+		//开始插入数据
+		for(var i=0;i<list.length;i++){
+			this.addRow(list[i]);
+		}
+		
+		if(!list || list.length == 0){
+			this.endUpdate({fail:true, msg:"没有查询到数据"});
+		}else{
+			this.endUpdate();
+		}
 	}
 	
 	//加载数据
@@ -382,14 +493,24 @@ function __ncTable(option){
 			url : this.url,
 			dataType : "json",
 			success : function(data) {
+				myself.beginUpdate();
+				
 				if(data){
 					var list = data.gridResult?data.gridResult:data;
+					
+					var gInfo = myself._headMethods.getGroupInfo(list);
+					var dg = myself.option.dataGroup;
+					
 					if(list.length > 0){
 						myself._cache_data = list;
 						
 						//开始插入数据
 						for(var i=0;i<list.length;i++){
-							myself.addRow(list[i]);
+							var item = list[i];
+							if(gInfo.match(item)){
+								myself.addGroupRow(item, dg ? dg.formatter(item) : "");
+							}
+							myself.addRow(item);
 						}
 						myself.endUpdate();
 					}else{
@@ -452,24 +573,87 @@ function __ncTable(option){
 		this._fixedColHTML += "</div>";
 		
 		//创建非冻结列
-		var style = 'style="width:'+this._getRowMaxWidth()+'"';
-		this._cacheRowHTML += '<div class="ncTableRow" nc-index={index} '+style+'>';
+		var style = [];
+		
+		var hWidth = this.$head.width();
+		var sw = hWidth > this._rowWidth ? hWidth : this._rowWidth;
+		style.push("width:" + sw + "px");
+		
+		if(this.option.style && this.option.style.row){
+			var s = this.option.style.row(item);
+			style.push(s?s:"");
+		}
+		this._cacheRowHTML += '<div class="ncTableRow" nc-index={index} style="'+style.join(";")+'">';
 		
         if(this._columns && this._columns.length > 0){
         	var index = this._columns[0].index;
         	this._cacheRowHTML = this._cacheRowHTML.replace("{index}", this._rowcount);
         	for(var i=0;i<this._columns.length;i++){
         		var col = this._columns[i];
-        		this._cacheRowHTML += this._buildBodyItem(col, item, {sumWidth: this._rowWidth, rowid:this._rowcount});
+        		var minus = hWidth - this._rowWidth;
+        		if(col["class"] == "ncTableHeadItem fillCol"){
+        			if(minus > 0){
+        				col.width = minus;
+        				col.hidden = false;
+            			this._cacheRowHTML += this._buildBodyItem(col, item, {sumWidth: sw, rowid:this._rowcount});
+        			}else{
+        			}
+        		}else{
+        			this._cacheRowHTML += this._buildBodyItem(col, item, {sumWidth: sw, rowid:this._rowcount});
+        		}
         	}
 		}
         
         this._cacheRowHTML += '</div>';
 	}
 	
+	//增加分组行
+	this.addGroupRow = function(item, html){
+		var n = item[this._headAttrs.groupName];
+		
+		this._cacheRowHTML = this._cacheRowHTML?this._cacheRowHTML:"";
+		this._fixedColHTML = this._fixedColHTML?this._fixedColHTML:"";
+		
+		//创建冻结列
+		if(this._fixedCols && this._fixedCols.length > 0){
+			this._fixedColHTML += '<div class="ncTableRow groupFix" nc-group-value="'+n+'"><span>组</span></div>';
+		}
+		
+		var hWidth = this.$head.width(),
+		    sw = hWidth > this._rowWidth ? hWidth : this._rowWidth, 
+		    minus = hWidth - this._rowWidth,
+		    w = "100%", w2 = 0;
+		    
+		if(minus > 0){
+			var $items = this.$head.find(".ncTableRow:first>.ncTableHeadItem:not(.hidden,.fillCol)");
+			w = this._inMethods.getWidthPercent(this._inMethods.sumWidth($items), hWidth);
+			w2 = this._inMethods.getWidthPercent(minus, hWidth);
+		}
+		
+		var style = [];
+		style.push("width:" + sw + "px");
+		
+		//创建非冻结列
+		var style = 'style="' + style.join(";") + '"';
+		
+        if(this._columns && this._columns.length > 0){
+        	this._cacheRowHTML += '<div class="ncTableRow group" nc-group-value="'+n+'" '+style+'>' +
+        	                          '<div class="ncTableBodyItem" style="width:'+w+';">' +
+		        	                      '<span class="ncCaret">' +
+		        	                          '<a class="ncCaretLink" nc-group-value="'+n+'"><i class="fa fa-caret-right"></i></a>' +
+		        	                      '</span>' +
+		        	                      '<span class="groupContent">'+(html?html:n)+'</span>' +
+		        	                   '</div>' +
+		        	                   (minus > 0 ? '<div class="ncTableBodyItem fillCol" style="width:'+w2+';"></div>' : '') +
+        	                      '</div>';
+		}
+        
+	}
+	
 	//构建单元格
 	this._buildBodyItem = function(col, item, opt){
-		var html = '<div class="ncTableBodyItem' + (col.hidden?' hidden':'') + '" ' +
+		var clazz = col["class"].indexOf("fillCol") > -1 ? "ncTableBodyItem fillCol" : "ncTableBodyItem";
+		var html = '<div class="' + clazz + (col.hidden?" hidden":"") + '" ' +
 			       this._getStyle(col, opt) + ' ' + (col.name?('name="' + col.name + '" '):'');
 		
 		if(col.type){
@@ -503,7 +687,7 @@ function __ncTable(option){
 	this._getStyle = function(col, opt){
 		var style = "";
 		if(col.width){
-			style += 'width:'+ this._getWidth(col, opt) + ';';
+			style += 'width:'+ this._inMethods.getWidth(col, opt) + ';';
 		}
 		if(col.align){
 			if(col.align == "left"){
@@ -526,12 +710,14 @@ function __ncTable(option){
     	if(opt && opt.fail){
     		//设置body内容
     		var $fail = $("<div class='nc-fail'><i style='color:#608fb7;' class='fa fa-exclamation-circle'></i>&nbsp;"+opt.msg+"</div>");
+    		this.$table.find(".nc-fail").remove();
     		this.$table.append($fail);
         	$fail.css({"left":(this.$table.width()-$fail.width())/2+"px", "top":(this.$table.height()-$fail.height())/2+"px"});
     	
         	var $nullRow = $("<div class='ncTableEmptyRow'></div>");
 			$nullRow.width(this.$table.find(".ncTableHead:first>.ncTableRow").width());
 			$nullRow.height(this.$table.find(".ncTableBody:first").height());
+			this.$table.find(".ncTableBody:first").find(".ncTableEmptyRow").remove();
 			this.$table.find(".ncTableBody:first").append($nullRow);
     	}else{
     		var $cacheRow = $(this._cacheRowHTML);
@@ -547,6 +733,8 @@ function __ncTable(option){
         	//绑定加载后各元素事件
         	this._bindEvent("load");
         	this._cacheRowHTML = "";
+        	
+        	this._groupExpandOrCollpaseAll(false);
     	}
     	this._lockRequest = false;
 	}
@@ -592,17 +780,18 @@ function __ncTable(option){
     
     //重新设置各组件位置
     this._resize = function(type, opt){
-    	var tableWidth = this._getElementWidth(this.$table, "border-box");
+    	var tableWidth = this._inMethods.getElementWidth(this.$table, "border-box");
+    	tableWidth = tableWidth > this._fixedColWidth ? tableWidth : (tableWidth + this._fixedColWidth);
     	if(type == "create"){
     		var $rowHeadHead = this.$table.find(".ncTableRowHeadHead:first");
-    		$rowHeadHead.css({width: this._getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
-            this.$table.find(".ncTableHead:first").css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
+    		$rowHeadHead.css({width: this._inMethods.getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
+            this.$table.find(".ncTableHead:first").css({width: this._inMethods.getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
     	}else if(type == "load"){
             var $rowHead = this.$table.find(".ncTableRowHead:first");
             var $body = this.$table.find(".ncTableBody:first");
             
-            $rowHead.css({width: this._getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
-            $body.css({width: this._getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
+            $rowHead.css({width: this._inMethods.getWidth({width:this._fixedColWidth},{sumWidth:tableWidth})});
+            $body.css({width: this._inMethods.getWidth({width:(tableWidth-this._fixedColWidth)},{sumWidth:tableWidth})});
             
             this._resize("create");
             
@@ -614,7 +803,7 @@ function __ncTable(option){
                 	var $br = $($bodyRow[i]);
                 	var $hr = $($headRow[i]);
                 	
-                	if(this._mergeNames){
+                	if(this._headAttrs.mergeNames){
                 		if(i > 0){
     	            		var $br1 = $($bodyRow[i-1]);
     	            		var $hr1 = $($headRow[i-1]);
@@ -626,7 +815,8 @@ function __ncTable(option){
                 		$br.css({height:this.option.rowHeight+"px"});
                     	$hr.css({height:this.option.rowHeight+"px"});
                 	}else{
-                		var ht = Math.ceil(this._px2Num($br.css("height")));
+                		var ht = Math.ceil(this._inMethods.px2Num($br.css("height")));
+                		ht = ht?ht:"32";
                     	$br.css({height:ht+"px"});
                     	$hr.css({height:ht+"px"});
                 	}
@@ -671,21 +861,21 @@ function __ncTable(option){
     
     //从tableHeadRow和tableBody中各抽出两行进行比较，根据结果来设置合并符号
     this._setMergeSignByRow = function($bodyRow1, $bodyRow2, $headRow1, $headRow2, lastRow){
-    	var $item1 = this._hasColumn($bodyRow1, this._mergeSignName);
-    	var $item2 = this._hasColumn($bodyRow2, this._mergeSignName);
+    	var $item1 = this._hasColumn($bodyRow1, this._headAttrs.mergeSignName);
+    	var $item2 = this._hasColumn($bodyRow2, this._headAttrs.mergeSignName);
     	
-    	$item1 = $item1?$item1:this._hasColumn($headRow1, this._mergeSignName);
-    	$item2 = $item2?$item2:this._hasColumn($headRow2, this._mergeSignName);
+    	$item1 = $item1?$item1:this._hasColumn($headRow1, this._headAttrs.mergeSignName);
+    	$item2 = $item2?$item2:this._hasColumn($headRow2, this._headAttrs.mergeSignName);
     	
     	if($item1.find(".nc-merge-col").length == 0){
-    		$item1.html(this._mergeSign);
+    		$item1.html(this._headAttrs.mergeSign);
     	}
     	if($item2.find(".nc-merge-col").length == 0){
-    		$item2.html(this._mergeSign);
+    		$item2.html(this._headAttrs.mergeSign);
     	}
     	
-		if(this._allColValEqual($bodyRow1, $bodyRow2, $headRow1, $headRow2, this._mergeNames)){
-			if(this._getMergeSignIndex($item1, this._mergeSignName) == 1){
+		if(this._allColValEqual($bodyRow1, $bodyRow2, $headRow1, $headRow2, this._headAttrs.mergeNames)){
+			if(this._getMergeSignIndex($item1, this._headAttrs.mergeSignName) == 1){
 				this._setMergeSign($item1, 1);
 			}else{
 				this._setMergeSign($item1, 0);
@@ -696,7 +886,7 @@ function __ncTable(option){
 				this._setMergeSign($item2, 1);
 			}
 		}else{
-			if(this._getMergeSignIndex($item1, this._mergeSignName) == 1){
+			if(this._getMergeSignIndex($item1, this._headAttrs.mergeSignName) == 1){
 				this._setMergeSign($item1, 2);
 			}
 		}
@@ -704,14 +894,14 @@ function __ncTable(option){
     
     //设置某行指定列的合并符号
     this._setMergeSign = function($item, i){
-    	$item.find(".nc-merge-col").html(this._mergeSigns[i]);
+    	$item.find(".nc-merge-col").html(this._headAttrs.mergeSigns[i]);
     }
     
     //获取某行指定列的符号序号
     this._getMergeSignIndex = function($item, name){
     	var sign = $item.find(".nc-merge-col").html();
-    	for(var i=0;i<this._mergeSigns.length;i++){
-    		if(sign == this._mergeSigns[i]) return i;
+    	for(var i=0;i<this._headAttrs.mergeSigns.length;i++){
+    		if(sign == this._headAttrs.mergeSigns[i]) return i;
     	}
     	return -1;
     }
@@ -722,9 +912,9 @@ function __ncTable(option){
 			this._dataHeight = height;
 		}
 		this._dataHeight = this._dataHeight?this._dataHeight:"300";
-		var fixHeight = this._getElementHeight(this.$table.find(".ncTableTitle:first")) +
-						this._getElementHeight(this.$table.find(".ncTableHead:first")) + 
-						this._getElementHeight(this._getPageRel());
+		var fixHeight = this._inMethods.getElementHeight(this.$table.find(".ncTableTitle:first")) +
+						this._inMethods.getElementHeight(this.$table.find(".ncTableHead:first")) + 
+						this._inMethods.getElementHeight(this._getPageRel());
 		var minusHeight = this._dataHeight - fixHeight;
 		
 		var $body = this.$table.find(".ncTableBody:first");
@@ -752,12 +942,11 @@ function __ncTable(option){
     		$tableHead.bind("mousedown", function(e){
     			myself.$headItems.each(function(){
     				var $this = $(this);
-    				var left = $this.offset().left + myself._getElementWidth($this);
-    				var top = $this.offset().top + myself._getElementHeight($this);
+    				var left = $this.offset().left + myself._inMethods.getElementWidth($this);
+    				var top = $this.offset().top + myself._inMethods.getElementHeight($this);
     				if(e.pageX > left - 10 && e.pageX < left + 10 &&
     				   e.pageY > $this.offset().top && e.pageY < top){
     					myself.action.$dragHeadItem = $this;
-    					myself.action.rowHeadWidth = myself._getElementWidth($tableHead.find(".ncTableRow:first"),"padding");
     					return;
     				}
     			});
@@ -769,7 +958,7 @@ function __ncTable(option){
 				var $this = $(this);
     			myself.$headItems.each(function(){
     				var $this = $(this);
-    				var left = $this.offset().left + myself._getElementWidth($this);
+    				var left = $this.offset().left + myself._inMethods.getElementWidth($this);
     				if(e.pageX > left - 10 && e.pageX < left + 10){
     					$this.css({cursor:"w-resize"});
     					return;
@@ -784,43 +973,90 @@ function __ncTable(option){
     		$tableHead.unbind("mouseup");
     		$tableHead.bind("mouseup", function(e){
     			if(myself.action.$dragHeadItem){
-    				var $this = $(this);
-    				var $dhi = myself.action.$dragHeadItem;
-    				var name = $dhi.attr("name");
-    				var width = e.pageX - $dhi.offset().left,
-    				    dhiWidth = myself._getElementWidth($dhi);
-    				var c = width - dhiWidth;
-    				c = c < 20 - dhiWidth ? 20 - dhiWidth : c;
-    				var $tr = $this.find(".ncTableRow:first");
-    				var trWidth = myself.action.rowHeadWidth + c;
-    				var calWidth = 0;
+    				var $this = $(this),
+    				    //表头行
+    				    $tr = $this.find(".ncTableRow:first"),
+    				    //拖动列
+    				    $dhi = myself.action.$dragHeadItem,
+    				    //拖动列名
+    				    name = $dhi.attr("name"),
+    				    //拖动后列长度
+    				    width = e.pageX - $dhi.offset().left,
+    				    //拖动前长度
+    				    dhiWidth = myself._inMethods.getElementWidth($dhi);
+    				
+    				//差控制不小于20
+    				width = width < 20 ? 20 : width;
+    				//前后长度差
+				    var c = width - dhiWidth, 
+				        hWidth = myself.$table.find(".ncTableHead:first").width(),
+				        rWidth = $this.find(".ncTableRow").width(),
+    				    trWidth = 0, calWidth = 0;
+				    
+				    trWidth = hWidth > rWidth ? hWidth : rWidth;
+    				trWidth = c > 0 ? trWidth + c : trWidth;
+    				    
     				var n2w = {};
+    				
+    				//统计列的宽度之和(拖动列、隐藏、填充列除外)
     				$tr.find(".ncTableHeadItem").each(function(){
-    					var $item = $(this);
-    					if(!$item.attr("nc-hidden") || $item.attr("nc-hidden") == "false"){
-    						if($item.attr("name") != name){
-    							var width = $item.css("width");
-    							width = myself._px2Num(width);
-    							n2w[$item.attr("name")] = width;
-    							calWidth += Number(width);
-        					}
-    					}
+    					var $item = $(this), iname = $item.attr("name");
+    					if($item.attr("nc-hidden") == "true" || iname == name) return;
+    					
+						var w = $item.css("width"), clazz = $item.attr("class");
+						
+						w = myself._inMethods.px2Num(w);
+						n2w[iname] = {width:w, clazz:clazz};
+						
+						//非填充列
+						if(!myself._inMethods.isFillCol(clazz)){
+							calWidth += Number(w);
+						}
     				});
+    				
     				$this.find(".ncTableRow").css({width:trWidth});
     				myself.$table.find(".ncTableBody:first>.ncTableRow").css({width:trWidth});
+    				
     				var percent = "";
+    				
+    				//设置每列的宽度
     				for(var j in n2w){
-    					percent = Math.floor((n2w[j])/trWidth*10000)/100+"%";
+    					var n = n2w[j];
+    					//填充列
+    					if(myself._inMethods.isFillCol(n.clazz)){
+							n.width = trWidth - width - calWidth;
+						}
+    					percent = myself._inMethods.getWidthPercent(n.width, trWidth);
     					$this.find(".ncTableHeadItem[name='"+j+"']").css({width:percent});
     					myself.$table.find(".ncTableBody:first>.ncTableRow>.ncTableBodyItem[name='"+j+"']").css({width:percent});
-    					myself._setColWidth(j, n2w[j]);
+    					myself._setColWidth(j, n.width);
     				}
-    				percent = Math.floor((trWidth-calWidth)/trWidth*10000)/100+"%";
+    				
+    				//设置拖动列宽度
+    				percent = myself._inMethods.getWidthPercent(width, trWidth);
     				$this.find(".ncTableHeadItem[name='"+name+"']").css({width:percent});
     				myself.$table.find(".ncTableBody:first>.ncTableRow>.ncTableBodyItem[name='"+name+"']").css({width:percent});
-    				myself._setColWidth(name, trWidth-calWidth);
+    				myself._setColWidth(name, width);
     				
     				myself._rowWidth = trWidth;
+    				
+    				//设置分组行的宽度
+    				if(myself._headAttrs.groupName){
+    					var hWidth = myself.$head.width(),
+	    				    sw = hWidth > myself._rowWidth ? hWidth : myself._rowWidth, 
+	    				    minus = hWidth - myself._rowWidth;
+    					var $items = myself.$head.find(".ncTableRow:first>.ncTableHeadItem:not(.hidden,.fillCol)");
+    					
+    					var w = myself._inMethods.getWidthPercent(myself._inMethods.sumWidth($items), sw);
+    					var w2 = myself._inMethods.getWidthPercent(minus, sw);
+	    				
+    					var $gRows = myself.$table.find(".ncTableBody:first>.ncTableRow.group");
+    					$gRows.each(function(){
+    						var $this = $(this);
+    						$this.find(".ncTableBodyItem:first").css({width:w});
+    						$this.find(".ncTableBodyItem.fillCol").css({width:w2});
+    					});
+    				}
     			}
     			myself.action.$dragHeadItem = null;
     			e.stopPropagation();
@@ -858,8 +1094,8 @@ function __ncTable(option){
         			var $items = $this.find(".ncTableBodyItem");
         			for(var i=0;i<$items.length;i++){
         				var $item = $($items[i]);
-        				if(e.pageX > $item.offset().left && e.pageX < $item.offset().left + myself._getElementWidth($item) &&
-        				   e.pageY > $item.offset().top && e.pageY < $item.offset().top + myself._getElementHeight($item)){
+        				if(e.pageX > $item.offset().left && e.pageX < $item.offset().left + myself._inMethods.getElementWidth($item) &&
+        				   e.pageY > $item.offset().top && e.pageY < $item.offset().top + myself._inMethods.getElementHeight($item)){
         					event.cellClick.call(myself, myself.getCurrentRowData(), $this.attr("nc-index"), $item.attr("name"));
         				}
         			}
@@ -902,6 +1138,20 @@ function __ncTable(option){
     			}
     			e.stopPropagation();
     		})
+    		
+    		this.$table.find("a.ncCaretLink").unbind("click")
+    		this.$table.find("a.ncCaretLink").bind("click", function(e){
+    			var $this = $(this), isExpand = !($this.attr("expand") == "true");
+    			myself._groupExpandOrCollpase($this.attr("nc-group-value"), isExpand, $this.parent().parent());
+    			$this.attr("expand", isExpand ? "true" : "false");
+    		});
+    		
+    		this.$table.find(".ncTableRow.group").unbind("click")
+    		this.$table.find(".ncTableRow.group").bind("click", function(e){
+    			var $this = $(this), isExpand = !($this.attr("expand") == "true");
+    			myself._groupExpandOrCollpase($this.attr("nc-group-value"), isExpand, $this);
+    			$this.attr("expand", isExpand ? "true" : "false");
+    		});
     	}else if(type == "create"){
     		//上一页点击事件
     		this._getPageRel(".ncPagerPrev:first").unbind("click");
@@ -941,7 +1191,7 @@ function __ncTable(option){
             });
             
             //搜索事件
-            var $searchRow = this.$table.find(".ncTableHead:first>.ncTableRow.search");
+            var $searchRow = this.$table.find(".ncTableRowHeadHead:first>.ncTableRow.search,.ncTableHead:first>.ncTableRow.search");
             if($searchRow.length > 0){
             	//输入框回车事件
             	$searchRow.find("input").keydown(function(event){
@@ -986,6 +1236,123 @@ function __ncTable(option){
         		e.stopPropagation();
         	});
     	}
+    }
+    
+    //展开或收起所有组下的所有行
+    this._groupExpandOrCollpaseAll = function(isExpand){
+    	var $groupRows = this.$table.find(".ncTableRow.group");
+    	$groupRows.each(function(){
+    		var $this = $(this);
+    		myself._groupExpandOrCollpase($this.attr("nc-group-value"), isExpand, $this);
+    	});
+    }
+    
+    //展开或收起同一组下的所有行
+    this._groupExpandOrCollpase = function(groupVal, isExpand, $row){
+    	var rowArr = [];
+    	
+    	var groupName = this._headAttrs.groupName;
+		var cache = this._cache_data;
+		var $next = $row.next();
+	        index = Number($next.attr("nc-index"));
+	    
+    	if(this._fixedCols.length > 0){
+    		rowArr.push(this._inMethods.getFixRow(index));
+    	}
+    	
+    	rowArr.push($next);
+    	
+    	for(var i=0;i<rowArr.length;i++){
+    		var $r = rowArr[i];
+    		while(cache[index - 1][groupName] == groupVal){
+    			if(isExpand){
+    				$r.show();
+    			}else{
+    				$r.hide();
+    			}
+    			$r = $r.next();
+    			
+    			var ni = $r.attr("nc-index");
+    			if(!ni) break;
+    			index = Number($r.attr("nc-index"));
+    		}
+    	}
+    	
+    	$row.find("a.ncCaretLink>i").attr("class", isExpand ? "fa fa-caret-down" : "fa fa-caret-right");
+    }
+    
+    //内部方法集合(后续代码重构，会将所有以下划线开头的方法，移到此处)
+    this._inMethods = {
+    	//获取固定行
+    	getFixRow : function(index){
+    		return myself.$table.find(".ncTableRowHead:first>.ncTableRow[nc-index='"+index+"']");
+    	},
+    	//是否是填充列
+    	isFillCol : function(clazz){
+    		return clazz == "ncTableHeadItem fillCol";
+    	},
+    	//获取宽度百分比
+    	getWidthPercent : function(width, sumWidth){
+    		return Math.floor((width/sumWidth)*10000)/100+"%";
+    	},
+    	//获取列宽
+    	getWidth : function(column, opt){
+    		if(opt && opt.sumWidth){
+    			return Math.floor((column.width/opt.sumWidth)*10000)/100+"%";
+    		}else{
+    			return column.width+"px";
+    		}
+    	},
+    	//汇总宽度
+    	sumWidth : function($items){
+    		var width = 0;
+    		var my = this;
+    		$items.each(function(){
+    			var $this = $(this);
+    			width += my.getElementWidth($this);
+    		});
+    		return width;
+    	},
+    	//获取元素高度
+    	getElementHeight : function($ele, type){
+    		if($ele.length > 0){
+    			if(type == "border-box"){
+    				return $ele.height() + this.px2Num($ele.css("padding-top")) + this.px2Num($ele.css("padding-bottom")) + 
+    		           this.px2Num($ele.css("border-top-width")) + this.px2Num($ele.css("border-bottom-width"));
+    			}else{
+    				return $ele.height() + this.px2Num($ele.css("padding-top")) + this.px2Num($ele.css("padding-bottom")) + 
+    		           this.px2Num($ele.css("margin-top")) + this.px2Num($ele.css("margin-bottom")) +
+    		           this.px2Num($ele.css("border-top-width")) + this.px2Num($ele.css("border-bottom-width"));
+    			}
+    		}else{
+    			return 0;
+    		}
+    	},
+    	//获取元素宽度
+    	getElementWidth : function($ele, type){
+    		if($ele.length > 0){
+    			if(type == "border-box"){
+    				return $ele.width() - (this.px2Num($ele.css("border-left-width")) + this.px2Num($ele.css("border-right-width")) +
+    				                       this.px2Num($ele.css("padding-left")) + this.px2Num($ele.css("padding-right")));
+    			}else if(type == "padding"){
+    				return $ele.width() + this.px2Num($ele.css("padding-left")) + this.px2Num($ele.css("padding-right")) + 
+    				                      this.px2Num($ele.css("border-left-width")) + this.px2Num($ele.css("border-right-width"));
+    			}else{
+    				return $ele.width() + this.px2Num($ele.css("padding-left")) + this.px2Num($ele.css("padding-right")) + 
+    		                              this.px2Num($ele.css("margin-left")) + this.px2Num($ele.css("margin-right")) + 
+    		                              this.px2Num($ele.css("border-left-width")) + this.px2Num($ele.css("border-right-width"));
+    			}
+    		}else{
+    			return 0;
+    		}
+    	},
+    	//像素转数字
+    	px2Num : function(px){
+        	if(px && px.indexOf("px") > 0){
+        		return Number(px.substring(0,px.indexOf("px")));
+        	}
+        	return Number(px);
+        }
     }
     
     //设置列宽
@@ -1058,49 +1425,6 @@ function __ncTable(option){
     	this._getPageRel(".ncPageNum:first").val(this._currentPage);
     }
     
-	//获取元素高度
-	this._getElementHeight = function($ele, type){
-		if($ele.length > 0){
-			if(type == "border-box"){
-				return $ele.height() + this._px2Num($ele.css("padding-top")) + this._px2Num($ele.css("padding-bottom")) + 
-		           this._px2Num($ele.css("border-top-width")) + this._px2Num($ele.css("border-bottom-width"));
-			}else{
-				return $ele.height() + this._px2Num($ele.css("padding-top")) + this._px2Num($ele.css("padding-bottom")) + 
-		           this._px2Num($ele.css("margin-top")) + this._px2Num($ele.css("margin-bottom")) +
-		           this._px2Num($ele.css("border-top-width")) + this._px2Num($ele.css("border-bottom-width"));
-			}
-		}else{
-			return 0;
-		}
-	}
-	
-	//获取元素宽度
-	this._getElementWidth = function($ele, type){
-		if($ele.length > 0){
-			if(type == "border-box"){
-				return $ele.width() - (this._px2Num($ele.css("border-left-width")) + this._px2Num($ele.css("border-right-width")) +
-				                       this._px2Num($ele.css("padding-left")) + this._px2Num($ele.css("padding-right")));
-			}else if(type == "padding"){
-				return $ele.width() + this._px2Num($ele.css("padding-left")) + this._px2Num($ele.css("padding-right")) + 
-				                      this._px2Num($ele.css("border-left-width")) + this._px2Num($ele.css("border-right-width"));
-			}else{
-				return $ele.width() + this._px2Num($ele.css("padding-left")) + this._px2Num($ele.css("padding-right")) + 
-		                              this._px2Num($ele.css("margin-left")) + this._px2Num($ele.css("margin-right")) + 
-		                              this._px2Num($ele.css("border-left-width")) + this._px2Num($ele.css("border-right-width"));
-			}
-		}else{
-			return 0;
-		}
-	}
-	
-	//内部方法：像素转数字
-	this._px2Num = function(px){
-    	if(px && px.indexOf("px") > 0){
-    		return Number(px.substring(0,px.indexOf("px")));
-    	}
-    	return Number(px);
-    };
-    
     //返回当前行序号
     this.getCurrentRowId = function(){
     	return this._currentRow;
@@ -1135,7 +1459,7 @@ function __ncTable(option){
     	var $row = this._getRowRel(".ncTableRow[nc-index='"+rowid+"']");
     	$row.addClass("focus");
     	
-    	if(this._selectType == "single"){
+    	if(this._headAttrs.selectType == "single"){
     		if(this._$lastCheckedBox){
     			this._$lastCheckedBox.prop("checked", false);
     		}
@@ -1148,6 +1472,13 @@ function __ncTable(option){
     		$checkBox.prop("checked", true);
     		this._$lastCheckedBox = $checkBox;
     	}
+    }
+    
+    //全选
+    this.selectAllRow = function(){
+        this._getRowRel(".ncTableRow[nc-index]").removeClass("focus");
+        this._getRowRel(".ncTableRow[nc-index]").addClass("focus");
+        this._getRowRel(".ncTableRow>.ncTableBodyItem[nc-type='attrCheckBox']>input[type='checkbox']").prop("checked",true);
     }
     
     //使已选择的行变成不选择
