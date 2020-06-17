@@ -216,7 +216,7 @@ function __ncTable(option){
 			var $item = col.ref.clone();
 			$item.html("&nbsp;");
 			$search.append($item);
-			if(!col.search) continue;
+			if(!col.search || col.search == "false") continue;
 			if(col.searchType == "select"){
 				var $select = $("<select></select>");
 				$item.html($select);
@@ -301,17 +301,19 @@ function __ncTable(option){
 				         '<option value="50">50</option>' +
 				         '<option value="100">100</option>';
 		}
-		var pageHTML = '<div class="ncPagerArea">' +
+		var pageHTML = '<div class="ncPagerArea" style="width:25%;">' +
 				       '<select class="ncPagerInput middle ncPageRows">' +
 				           pageOption +
 				       '</select>' +
 				       '</div>' +
-				       '<div class="ncPagerArea center">' +
-			               '<div class="ncPagerPrev" title="上一页"><i class="fa fa-chevron-left"></i></div>' +
+				       '<div class="ncPagerArea center" style="width:50%;">' +
+				           '<div class="ncPagerFirst" title="首页"><i class="fa fa-step-backward"></i></div>' +
+			               '<div class="ncPagerPrev" title="上一页"><i class="fa fa-backward"></i></div>' +
 					       '<input class="ncPagerInput ncPageNum" />&nbsp;&nbsp;共 <span class="ncPageTotal"></span> 页' +
-					       '<div class="ncPagerNext" title="下一页"><i class="fa fa-chevron-right"></i></div>' +
+					       '<div class="ncPagerNext" title="下一页"><i class="fa fa-forward"></i></div>' +
+					       '<div class="ncPagerLast" title="末页"><i class="fa fa-step-forward"></i></div>' +
 					   '</div>' +
-					   '<div class="ncPagerArea right">' +
+					   '<div class="ncPagerArea right" style="width:25%;">' +
 					       '<div><span class="ncPageRowRange">1-20</span>&nbsp;&nbsp;共 <span class="ncPageRecords"></span> 条</div>' +
 					   '</div>';
 		this._getPageRel().html(pageHTML);
@@ -673,9 +675,10 @@ function __ncTable(option){
 				html += '<a class="attrSubGrid"><i class="fa fa-caret-right"></i></a>';
 			}
 		}else{
-			var content = item[col.name]?item[col.name]:"";
-			html += 'title="'+content+'">';
-			html += content?content:"&nbsp;";
+			var val = item[col.name];
+			html += 'title="'+val+'">';
+			var content = (val || typeof(val) === "number")?item[col.name]:"&nbsp;";
+			html += content;
 		}
 		
 		html += '</div>';
@@ -1182,6 +1185,22 @@ function __ncTable(option){
             	}
             	event.stopPropagation();
             });
+    		//首页点击事件
+    		this._getPageRel(".ncPagerFirst:first").unbind("click");
+    		this._getPageRel(".ncPagerFirst:first").click(function(e){
+            	if(myself._lockRequest) return;
+            	myself._currentPageMinus(1);
+            	myself.loadData();
+            	e.stopPropagation();
+            });
+            //末页点击事件
+    		this._getPageRel(".ncPagerLast:first").unbind("click");
+    		this._getPageRel(".ncPagerLast:first").click(function(e){
+            	if(myself._lockRequest) return;
+            	myself._currentPagePlus(myself.pageTotal);
+            	myself.loadData();
+            	e.stopPropagation();
+            });
             //每页行数下拉改变事件
     		this._getPageRel(".ncPageRows:first").unbind("change");
     		this._getPageRel(".ncPageRows:first").change(function(e){
@@ -1414,14 +1433,16 @@ function __ncTable(option){
     }
     
     //当前页增加1
-    this._currentPagePlus = function(){
-      	this._currentPage = (this._currentPage+1)>this.pageTotal?this.pageTotal:(this._currentPage+1);
+    this._currentPagePlus = function(num){
+    	var page = num?num:this._currentPage;
+      	this._currentPage = (page+1)>this.pageTotal?this.pageTotal:(page+1);
     	this._getPageRel(".ncPageNum:first").val(this._currentPage);
     }
     
     //当前页增加1
-    this._currentPageMinus = function(){
-    	this._currentPage = (this._currentPage-1)<=0?1:(this._currentPage-1);
+    this._currentPageMinus = function(num){
+    	var page = num?num:this._currentPage;
+    	this._currentPage = (page-1)<=0?1:(page-1);
     	this._getPageRel(".ncPageNum:first").val(this._currentPage);
     }
     
